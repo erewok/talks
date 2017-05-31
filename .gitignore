@@ -1,0 +1,5 @@
+*~
+.stack-work/
+build/
+examples/*py
+__pycache__
