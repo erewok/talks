@@ -18,11 +18,11 @@ library
   exposed-modules:     Lib
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , blaze-html
                      , bytestring
-                     , charset
-                     , lens
-                     , servant-foreign
                      , servant
+                     , servant-blaze
+                     , servant-server
                      , text
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
@@ -39,9 +39,9 @@ executable servant-sample-py
                      , servant
                      , servant-foreign
                      , servant-py
+                     , servant-server
                      , text
                      , filepath
-                     , warp
   default-language:    Haskell2010
 
 executable servant-sample-server
@@ -51,6 +51,7 @@ executable servant-sample-server
   build-depends:       base
                      , servant-sample
                      , bytestring
+                     , blaze-html
                      , stm
                      , aeson
                      , wai
@@ -85,8 +86,9 @@ executable servant-sample-quickcheck
   build-depends:       base
                      , servant-sample
                      , bytestring
+                    --  , hspec==2.3.2
                      , servant
-                     , servant-quickcheck
+                    --  , servant-quickcheck
                      , text
                      , filepath
                      , warp
