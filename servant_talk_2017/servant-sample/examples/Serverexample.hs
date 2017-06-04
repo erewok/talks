@@ -79,8 +79,8 @@ counterReset oldCounter newCounter = liftIO . atomically $ do
 
 -- Sample QueryParam, Sample Header argument
 counterWithParam :: MonadIO m => TVar Counter -> Maybe T.Text -> Maybe T.Text -> m Counter
-counterWithParam counter param header = liftIO . atomically $ do
+counterWithParam counter param _ = liftIO . atomically $ do
   oldValue <- readTVar counter
-  let newValue = if (isJust param) then -1 * oldValue else oldValue
+  let newValue = if isJust param then -1 * oldValue else oldValue
   writeTVar counter newValue
   pure newValue

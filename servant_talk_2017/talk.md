@@ -35,6 +35,8 @@ But these descriptions may be confusing.
 
 ## "The Expression Problem"
 
+How to create "open" data types/functions?
+
 For a good description of this problem, read "Data Types A La Carte":
 
 http://www.cs.ru.nl/~W.Swierstra/Publications/DataTypesALaCarte.pdf
@@ -77,7 +79,7 @@ type CounterHome = "counter-html" :> Get '[HTML] Html
 type CounterHome = "counter-html" :> Get '[HTML] Html
 ```
 
-Like a function type definition: if we go to this URI, we *GET* back something of the form *HTML*.
+If we go to this URI, we *GET* back something of the form *HTML* with content-type of 'html'.
 
 ----
 
@@ -101,13 +103,11 @@ type SampleApi = CounterHome :<|> CounterApi
 
 ----
 
-## A web endpoint or resource as a *type*
+## A web endpoint or resource is a *type*
 
 ```haskell
 newtype Counter = Counter { value :: Int }
-  deriving (Generic, Show, Num)
-instance ToJSON Counter
-instance FromJSON Counter
+    ...
 
 type CounterHome = "counter-html" :> Get '[HTML] Html
 
@@ -117,19 +117,16 @@ type CounterApi = "counter-post" :> Post '[JSON] Counter
 type SampleApi = CounterHome :<|> CounterApi
 ```
 
-How can we get a value of our API type?
+This means we can make assertions about it, we can know a client is matched to a server or we can assert that two APIs
+are equivalent.
+
+Q: How can we get a value of our API type?
 
 ----
 
 ## Proxy: a stand-in *value* for a type
 
 ```haskell
-
-newtype Counter = Counter { value :: Int }
-  deriving (Generic, Show, Num)
-instance ToJSON Counter
-instance FromJSON Counter
-
 type CounterApi = "counter-post" :> Post '[JSON] Counter
     :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
 
@@ -145,27 +142,10 @@ counterApi = Proxy
 ```haskell
 -- The *type* of our API
 type CounterApi = "counter-post" :> Post '[JSON] Counter
-    :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
-    :<|> "counter-reset-post" :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
-    :<|> "counter-queryparam" :> QueryParam "sortby" T.Text
-        :> Header "Some-Header" T.Text :> Get '[JSON] Counter
-
--- Our API as a Servant value
-counterApi :: Proxy CounterApi
-counterApi = Proxy
-```
-
-----
-
-## An extended example:
-
-```haskell
--- The *type* of our API
-type CounterApi = "counter-post" :> Post '[JSON] Counter
-    :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
-    :<|> "counter-reset-post" :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
-    :<|> "counter-queryparam" :> QueryParam "sortby" T.Text
-        :> Header "Some-Header" T.Text :> Get '[JSON] Counter
+  :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
+  :<|> "counter-reset-post" :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
+  :<|> "counter-queryparam" :> QueryParam "sortby" T.Text
+    :> Header "Some-Header" T.Text :> Get '[JSON] Counter
 
 -- Our API as a Servant value
 counterApi :: Proxy CounterApi
@@ -201,7 +181,7 @@ main = do
   Warp.run 8000 (serve sampleApi $ server cntr)
 ```
 
-Requires the dependency `servant-server` and `warp`.
+Requires the dependencies `servant-server`, `wai`, and `warp`.
 
 ----
 
@@ -219,6 +199,7 @@ server counter = counterHome counter
 counterHome :: TVar Counter -> Handler H.Html
 counterHome counter = do
   current <- liftIO . atomically $ readTVar counter
+  pure $ H.docTypeHtml $ H.body $ H.p $ (H.string . show . value) current
 ```
 
 ----
@@ -307,36 +288,69 @@ counterReset oldCounter newCounter = liftIO . atomically $ do
 
 ----
 
-## Client Example (Python generator)
+## Client Example
 
 ```haskell
 
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes            #-}
-
 module Main where
 
-import qualified Data.ByteString.Char8 as B
-import           Servant.Foreign
-import           System.FilePath
-import           Servant.PY
-import           Servant.PY.Python
+import           Network.HTTP.Client (newManager, defaultManagerSettings)
+import           Servant.Client
 
 import           Lib
 
+-- Haskell client generation
+postCounter
+  :<|> multiplier
+  :<|> reset
+  :<|> paramCounter = client counterApi
+```
+
+The `client` function creates a bunch of client functions for each endpoint in our API.
+
+----
+
+```haskell
+postCounter
+  :<|> multiplier
+  :<|> reset
+  :<|> paramCounter = client counterApi
+
+queries :: ClientM (Counter, Counter, Counter)
+queries = do
+  initial <- reset $ Counter 10
+  multCount <- multiplier 5
+  post <- postCounter
+  return (initial, multCount, post)
+
+run :: IO ()
+run = do
+  manager <- newManager defaultManagerSettings
+  res <- runClientM queries (ClientEnv manager (BaseUrl Http "localhost" 8000 ""))
+  case res of
+    Left err -> putStrLn $ "Error: " ++ show err
+    Right (initial, multCount, post) -> do
+      print initial
+      print multCount
+      print post
+```
+
+----
+
+```haskell
 
 instance HasForeignType Python B.ByteString Counter where
   typeFor _ _ _ = "{\"value\": int}"
 
--- where our static files reside
-result :: FilePath
-result = "examples"
-
 main :: IO ()
-main = writePythonForAPI counterApi requests (result </> "api.py")
-
+main = do
+  -- test out the Haskell clients
+  run
+  -- Write out a Python module with client code
+  writePythonForAPI counterApi requests ("examples" </> "api.py")
 ```
+
+Here's the Python-code-generator.
 
 ---
 
@@ -344,7 +358,7 @@ main = writePythonForAPI counterApi requests (result </> "api.py")
 
 ----
 
-## Client Example
+## Swagger Example
 
 ```haskell
 
@@ -357,7 +371,7 @@ Requires the dependency `servant-docs`.
 
 ## Other Interpretations
 
-- Servant Quickcheck
+- Servant Quickcheck: quickcheck that two APIs are equal or no 500s!
 - Generating Servant API types *from* Swagger Definitions
 - Whatever else people dream up
 
@@ -366,5 +380,7 @@ Requires the dependency `servant-docs`.
 ## Thanks for listening!
 
 Erik Aker
+
 @erewok
+
 github.com/erewok

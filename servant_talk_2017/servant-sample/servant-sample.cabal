@@ -28,15 +28,18 @@ library
   default-extensions:  OverloadedStrings
   ghc-options:         -Wall
 
-executable servant-sample-py
+executable servant-sample-client
   hs-source-dirs:      examples
-  main-is:             Pyexample.hs
+  main-is:             Clientexample.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , servant-sample
                      , bytestring
                      , aeson
+                     , http-client
+                     , http-client-tls
                      , servant
+                     , servant-client
                      , servant-foreign
                      , servant-py
                      , servant-server
@@ -71,11 +74,14 @@ executable servant-sample-swagger
                      , servant-sample
                      , bytestring
                      , aeson
+                     , http-types
                      , servant
+                     , servant-server
                      , servant-docs
                      , text
                      , filepath
                      , warp
+                     , wai
   default-language:    Haskell2010
 
 
