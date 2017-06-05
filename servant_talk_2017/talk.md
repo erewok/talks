@@ -1,6 +1,17 @@
 ## Describing the Elephant:
 #### Using Servant to Serve, Request, and Document APIs (and more!)
 
+Erik Aker
+@erewok
+
+----
+
+## Administrivia
+
+All code for this talk available here:
+
+github.com/erewok/talks/tree/master/servant_talk_2017
+
 ---
 
 ## What Makes Servant Different or Interesting?
