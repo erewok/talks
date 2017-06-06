@@ -1,6 +1,4 @@
 {-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TypeOperators              #-}
 
@@ -9,16 +7,11 @@ module Main where
 
 import           Control.Concurrent.STM
 import           Control.Monad.IO.Class
-import           Data.Aeson
 import           Data.Maybe
-import           Data.Proxy
 import qualified Data.Text                   as T
-import           GHC.Generics
 import           Network.Wai.Handler.Warp as Warp
 import           Servant
-import           Servant.HTML.Blaze
 import qualified Text.Blaze.Html5            as H
-import qualified Text.Blaze.Html5.Attributes as A
 
 import           Lib
 

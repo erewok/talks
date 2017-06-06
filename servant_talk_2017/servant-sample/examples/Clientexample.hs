@@ -21,12 +21,14 @@ postCounter
   :<|> reset
   :<|> paramCounter = client counterApi
 
-queries :: ClientM (Counter, Counter, Counter)
+queries :: ClientM (Counter, Counter, Counter, Counter, Counter)
 queries = do
   initial <- reset $ Counter 10
   multCount <- multiplier 5
   post <- postCounter
-  return (initial, multCount, post)
+  reset2 <- reset $ Counter 20
+  multCount2 <- multiplier 5
+  return (initial, multCount, post, reset2, multCount2)
 
 
 run :: IO ()
@@ -35,10 +37,12 @@ run = do
   res <- runClientM queries (ClientEnv manager (BaseUrl Http "localhost" 8000 ""))
   case res of
     Left err -> putStrLn $ "Error: " ++ show err
-    Right (initial, multCount, post) -> do
+    Right (initial, multCount, post, reset2, multCount2) -> do
       print initial
       print multCount
       print post
+      print reset2
+      print multCount2
 
 instance HasForeignType Python B.ByteString Counter where
   typeFor _ _ _ = "{\"value\": int}"

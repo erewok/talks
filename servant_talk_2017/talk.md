@@ -18,14 +18,6 @@ github.com/erewok/talks/tree/master/servant_talk_2017
 
 ----
 
-## There's a paper
-
-http://alpmestan.com/servant/servant-wgp.pdf
-
-(It's interesting and approachable)
-
-----
-
 ## Misconceptions
 
 People often describe Servant as a Haskell...
@@ -35,6 +27,14 @@ People often describe Servant as a Haskell...
 - library for making APIs
 
 But these descriptions may be confusing.
+
+----
+
+## There's a paper
+
+http://alpmestan.com/servant/servant-wgp.pdf
+
+(It's interesting and approachable)
 
 ----
 
@@ -128,14 +128,15 @@ type CounterApi = "counter-post" :> Post '[JSON] Counter
 type SampleApi = CounterHome :<|> CounterApi
 ```
 
-This means we can make assertions about it, we can know a client is matched to a server or we can assert that two APIs
-are equivalent.
-
-Q: How can we get a value of our API type?
+This means we can make assertions about it:
+    - we can know a client is matched to a server or
+    - we can even assert that two APIs are equivalent.
 
 ----
 
-## Proxy: a stand-in *value* for a type
+## Q: How can we get a value of our API type?
+
+A: Proxy, a stand-in *value* for a type
 
 ```haskell
 type CounterApi = "counter-post" :> Post '[JSON] Counter
@@ -363,6 +364,19 @@ main = do
 
 Here's the Python-code-generator.
 
+----
+
+## In action...
+
+```
+❯ stack exec servant-sample-client
+Counter {value = 10}
+Counter {value = 50}
+Counter {value = 50}
+Counter {value = 20}
+Counter {value = 100}
+```
+
 ---
 
 ## Interpretation III: Generating Swagger Docs
@@ -372,11 +386,66 @@ Here's the Python-code-generator.
 ## Swagger Example
 
 ```haskell
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+...
+instance ToCapture (Capture "mult" Int) where
+  toCapture _ =
+    DocCapture "mult"                                 -- name
+               "(integer) to multiply our counter by" -- description
 
+instance ToSample Counter where
+  toSamples _ = singleSample (Counter 5) -- example of output
+
+
+instance ToParam (QueryParam "sortby" T.Text) where
+  toParam _ =
+    DocQueryParam "sortby"                     -- name
+                  ["val", "..."] -- example of values (not necessarily exhaustive)
+                  "A dummy query param we're not even using." -- description
+                  Normal -- Normal, List or Flag
 ```
 
 Requires the dependency `servant-docs`.
 
+----
+
+## Running the docs generator
+
+```haskell
+apiDocs :: API
+apiDocs = docs counterApi
+
+main :: IO ()
+main = writeFile "./examples/docs.md" . markdown $ apiDocs
+```
+
+----
+
+## Documentation!
+
+```
+## POST /counter-multiplier/:mult
+
+Clients must supply the following data
+
+#### Captures:
+
+- *mult*: (integer) to multiply our counter by
+
+#### Response:
+
+- Status code 200
+- Headers: []
+
+- Supported content types are:
+
+    - `application/json`
+
+- Response body as below.
+
+```javascript
+{"value":5}
+```
 
 ---
 
