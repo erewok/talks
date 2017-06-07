@@ -22,7 +22,7 @@ github.com/erewok/talks/tree/master/servant_talk_2017
 
 People often describe Servant as a Haskell...
 
-- web framwork
+- web framework
 - web-client-generator
 - library for making APIs
 
@@ -60,6 +60,20 @@ http://www.cs.ru.nl/~W.Swierstra/Publications/DataTypesALaCarte.pdf
 - Servant is meant to be open/extensible:
   - Users can invent new ways to *interpret* Servant API types
   - Users can *extend* the capabilities of Servant library: new combinators, new content-types, etc.
+
+----
+
+## Core Servant Ideas
+
+1. "Describe" an API and then
+2. Build interpretations
+
+Interpretations can include:
+
+- Running a server
+- Writing clients (in any programming language)
+- Documentation
+- Testing
 
 ---
 
@@ -247,6 +261,7 @@ counterReset oldCounter newCounter = liftIO . atomically $ do
 
 - Lots of GHC Extensions
 - Lots of typeclass and type family stuff
+- Lots of Monad Transformers in typical servant-server code.
 
 ----
 
