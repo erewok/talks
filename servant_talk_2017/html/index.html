@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>reveal-md</title>
+        <link rel="stylesheet" href="./css/reveal.css">
+        <link rel="stylesheet" href="./css/theme/solarized.css" id="theme">
+        <link rel="stylesheet" href="./css/highlight/zenburn.css">
+        <link rel="stylesheet" href="./css/print/paper.css" type="text/css" media="print">
+
+    </head>
+    <body>
+
+        <div class="reveal">
+            <div class="slides"><section ><section data-markdown><script type="text/template">## Describing the Elephant:
+#### Using Servant to Serve, Request, and Document APIs (and more!)
+
+Erik Aker
+@erewok
+</script></section><section data-markdown><script type="text/template">
+## Administrivia
+
+All code for this talk available here:
+
+github.com/erewok/talks/tree/master/servant_talk_2017
+</script></section></section><section ><section data-markdown><script type="text/template">
+## What Makes Servant Different or Interesting?
+</script></section><section data-markdown><script type="text/template">
+## Misconceptions
+
+People often describe Servant as a Haskell...
+
+- web framwork
+- web-client-generator
+- library for making APIs
+
+But these descriptions may be confusing.
+</script></section><section data-markdown><script type="text/template">
+## There's a paper
+
+http://alpmestan.com/servant/servant-wgp.pdf
+
+(It's interesting and approachable)
+</script></section><section data-markdown><script type="text/template">
+## From the Servant paper's abstract
+
+> ...Servant [is] an extensible, type-level DSL for describing Web APIs. Servant APIs are Haskell types. An API type can be interpreted in several different ways...
+</script></section><section data-markdown><script type="text/template">
+## "The Expression Problem"
+
+How to create "open" data types/functions?
+
+For a good description of this problem, read "Data Types A La Carte":
+
+http://www.cs.ru.nl/~W.Swierstra/Publications/DataTypesALaCarte.pdf
+</script></section><section data-markdown><script type="text/template">
+## Some Theoretical Takeaways
+
+- APIs are type-safe
+- Servant is meant to be open/extensible:
+  - Users can invent new ways to *interpret* Servant API types
+  - Users can *extend* the capabilities of Servant library: new combinators, new content-types, etc.
+</script></section></section><section ><section data-markdown><script type="text/template">
+## Servant: A library (or DSL) for *Describing* APIs
+
+[github.com/haskell-servant/servant](https://github.com/haskell-servant/servant)
+</script></section><section data-markdown><script type="text/template">
+## What does "describing web APIs" look like?
+
+```haskell
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE TypeOperators              #-}
+
+module Lib where
+
+import Servant
+
+type CounterHome = "counter-html" :> Get '[HTML] Html
+```
+</script></section><section data-markdown><script type="text/template">
+## A web endpoint/resource is a *type*
+
+```haskell
+type CounterHome = "counter-html" :> Get '[HTML] Html
+```
+
+If we go to this URI, we *GET* back something of the form *HTML* with content-type of 'html'.
+</script></section><section data-markdown><script type="text/template">
+## We can also combine APIs
+
+```haskell
+-- A sample thing to accept and/or return
+newtype Counter = Counter { value :: Int }
+  deriving (Generic, Show, Num)
+instance ToJSON Counter
+instance FromJSON Counter
+
+type CounterHome = "counter-html" :> Get '[HTML] Html
+
+type CounterApi = "counter-post" :> Post '[JSON] Counter
+    :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
+
+type SampleApi = CounterHome :<|> CounterApi
+
+```
+</script></section><section data-markdown><script type="text/template">
+## A web endpoint or resource is a *type*
+
+```haskell
+newtype Counter = Counter { value :: Int }
+    ...
+
+type CounterHome = "counter-html" :> Get '[HTML] Html
+
+type CounterApi = "counter-post" :> Post '[JSON] Counter
+    :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
+
+type SampleApi = CounterHome :<|> CounterApi
+```
+
+This means we can make assertions about it:
+    - we can know a client is matched to a server or
+    - we can even assert that two APIs are equivalent.
+</script></section><section data-markdown><script type="text/template">
+## Q: How can we get a value of our API type?
+
+A: Proxy, a stand-in *value* for a type
+
+```haskell
+type CounterApi = "counter-post" :> Post '[JSON] Counter
+    :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
+
+-- Here's the *value* representation of our CounterApi type
+counterApi :: Proxy CounterApi
+counterApi = Proxy
+```
+</script></section><section data-markdown><script type="text/template">
+## An extended example:
+
+```haskell
+-- The *type* of our API
+type CounterApi = "counter-post" :> Post '[JSON] Counter
+  :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
+  :<|> "counter-reset-post" :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
+  :<|> "counter-queryparam" :> QueryParam "sortby" T.Text
+    :> Header "Some-Header" T.Text :> Get '[JSON] Counter
+
+-- Our API as a Servant value
+counterApi :: Proxy CounterApi
+counterApi = Proxy
+```
+
+Next step: interpreting our API
+</script></section></section><section ><section data-markdown><script type="text/template">
+## Interpretation I: Serving Servant
+</script></section><section data-markdown><script type="text/template">
+## Server Example
+
+```haskell
+-- Creating a counter that starts from 0
+newCounter :: IO (TVar Counter)
+newCounter = newTVarIO 0
+
+-- Our Server
+server :: TVar Counter -> Server SampleApi
+server counter = counterHome counter
+  :<|> currentValue counter
+  :<|> counterMult counter
+  :<|> counterReset counter
+  :<|> counterWithParam counter
+
+main :: IO ()
+main = do
+  cntr <- newCounter
+  Warp.run 8000 (serve sampleApi $ server cntr)
+```
+
+Requires the dependencies `servant-server`, `wai`, and `warp`.
+</script></section><section data-markdown><script type="text/template">
+## Server Handler example: HTML
+
+```haskell
+-- Our Server
+type CounterHome = "counter-html" :> Get '[HTML] Html
+
+server :: TVar Counter -> Server SampleApi
+server counter = counterHome counter
+  ...
+
+-- Simple HTML Endpoint: We can return Servant's `Handler a` type
+counterHome :: TVar Counter -> Handler H.Html
+counterHome counter = do
+  current <- liftIO . atomically $ readTVar counter
+  pure $ H.docTypeHtml $ H.body $ H.p $ (H.string . show . value) current
+```
+</script></section><section data-markdown><script type="text/template">
+## Server Handler example: JSON POST
+
+```haskell
+type CounterApi = "counter-post" :> Post '[JSON] Counter
+    :<|> "counter-reset-post" :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
+    ...
+
+-- Our Server
+server :: TVar Counter -> Server SampleApi
+server counter = ...
+  :<|> counterReset counter
+  ...
+
+-- Reset Counter to POSTed Counter value
+counterReset :: MonadIO m => TVar Counter -> Counter -> m Counter
+counterReset oldCounter newCounter = liftIO . atomically $ do
+  writeTVar oldCounter newCounter
+  pure newCounter
+
+```
+</script></section></section><section ><section data-markdown><script type="text/template">
+## Some Difficulties
+</script></section><section data-markdown><script type="text/template">
+## Tough for Beginners:
+
+- Lots of GHC Extensions
+- Lots of typeclass and type family stuff
+</script></section><section data-markdown><script type="text/template">
+
+## Gnarly Error Messages
+
+```
+    • Couldn't match type ‘(Counter -> m0 Counter)
+                           :<|> (Maybe T.Text -> Maybe T.Text -> m1 Counter)’
+                     with ‘Maybe T.Text
+                           -> Maybe T.Text
+                           -> transformers-0.5.2.0:Control.Monad.Trans.Except.ExceptT
+                                ServantErr IO Counter’
+      Expected type: Server SampleApi
+        Actual type: transformers-0.5.2.0:Control.Monad.Trans.Except.ExceptT
+                       ServantErr IO H.Html
+                     :<|> (transformers-0.5.2.0:Control.Monad.Trans.Except.ExceptT
+                             ServantErr IO Counter
+                           :<|> ((Int
+                                  -> transformers-0.5.2.0:Control.Monad.Trans.Except.ExceptT
+                                       ServantErr IO Counter)
+                                 :<|> ((Int
+                                        -> transformers-0.5.2.0:Control.Monad.Trans.Except.ExceptT
+                                             ServantErr IO Counter)
+                                       :<|> ((Counter -> m0 Counter)
+                                             :<|> (Maybe T.Text -> Maybe T.Text -> m1 Counter)))))
+    • In the expression:
+        counterHome counter
+        :<|>
+          currentValue counter
+          :<|>
+            counterPlusOne counter
+            :<|>
+              counterMult counter
+              :<|> counterReset counter :<|> counterWithParam counter
+
+```
+</script></section><section data-markdown><script type="text/template">
+## Some Common "Web Framework" Stuff is harder
+
+- Authentication & sessions can be tough
+- Uploading files is not quite implemented
+- Returning Errors as JSON*
+
+</script></section></section><section ><section data-markdown><script type="text/template">
+## Interpretation II: Generating Client code (Haskell, Javascript, Python...)
+</script></section><section data-markdown><script type="text/template">
+## Client Example
+
+```haskell
+
+module Main where
+
+import           Network.HTTP.Client (newManager, defaultManagerSettings)
+import           Servant.Client
+
+import           Lib
+
+-- Haskell client generation
+postCounter
+  :<|> multiplier
+  :<|> reset
+  :<|> paramCounter = client counterApi
+```
+
+The `client` function creates a bunch of client functions for each endpoint in our API.
+</script></section><section data-markdown><script type="text/template">
+```haskell
+queries :: ClientM (Counter, Counter, Counter)
+queries = do
+  initial <- reset $ Counter 10
+  multCount <- multiplier 5
+  post <- postCounter
+  reset2 <- reset $ Counter 20
+  multCount2 <- multiplier 5
+  return (initial, multCount, post, reset2, multCount2)
+
+run :: IO ()
+run = do
+  manager <- newManager defaultManagerSettings
+  res <- runClientM queries (ClientEnv manager (BaseUrl Http "localhost" 8000 ""))
+  case res of
+    Left err -> putStrLn $ "Error: " ++ show err
+    Right (initial, multCount, post, reset2, multCount2) -> do
+      print initial
+      print multCount
+      print post
+      print reset2
+      print multCount2
+```
+</script></section><section data-markdown><script type="text/template">
+## In action...
+
+```
+❯ stack exec servant-sample-client
+Counter {value = 10}
+Counter {value = 50}
+Counter {value = 50}
+Counter {value = 20}
+Counter {value = 100}
+```
+</script></section><section data-markdown><script type="text/template">
+## We can also use servant-foreign to write client generators for any language
+
+```haskell
+instance HasForeignType Python B.ByteString Counter where
+  typeFor _ _ _ = "{\"value\": int}"
+
+main :: IO ()
+main = do
+  -- test out the Haskell clients
+  run
+  -- Write out a Python module with client code
+  writePythonForAPI counterApi requests ("examples" </> "api.py")
+```
+
+(Here's the Python-code-generator).
+</script></section></section><section ><section data-markdown><script type="text/template">
+## Interpretation III: Generating (and serving) Docs
+</script></section><section data-markdown><script type="text/template">
+## Docs Example
+
+```haskell
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+...
+instance ToCapture (Capture "mult" Int) where
+  toCapture _ =
+    DocCapture "mult"                                 -- name
+               "(integer) to multiply our counter by" -- description
+
+instance ToSample Counter where
+  toSamples _ = singleSample (Counter 5) -- example of output
+
+
+instance ToParam (QueryParam "sortby" T.Text) where
+  toParam _ =
+    DocQueryParam "sortby"                     -- name
+                  ["val", "..."] -- example of values (not necessarily exhaustive)
+                  "A dummy query param we're not even using." -- description
+                  Normal -- Normal, List or Flag
+```
+
+Requires the dependency `servant-docs`.
+</script></section><section data-markdown><script type="text/template">
+## Running the docs generator
+
+```haskell
+apiDocs :: API
+apiDocs = docs counterApi
+
+main :: IO ()
+main = writeFile "./examples/docs.md" . markdown $ apiDocs
+```
+</script></section><section data-markdown><script type="text/template">
+## Documentation!
+
+```
+## POST /counter-multiplier/:mult
+
+Clients must supply the following data
+
+#### Captures:
+
+- *mult*: (integer) to multiply our counter by
+
+#### Response:
+
+- Status code 200
+- Headers: []
+
+- Supported content types are:
+
+    - `application/json`
+
+- Response body as below.
+
+```javascript
+{"value":5}
+```
+</script></section></section><section  data-markdown><script type="text/template">
+## Other Interpretations
+
+- Clients in Javascript (Angular, jQuery, React, etc.) and other languages.
+- Servant Quickcheck: quickcheck that two APIs are equal or no 500s!
+- Generating Servant API types *from* Swagger Definitions.
+- Whatever else people dream up.
+</script></section><section  data-markdown><script type="text/template">
+## Thanks for listening!
+
+Erik Aker
+
+@erewok
+
+github.com/erewok
+</script></section></div>
+        </div>
+
+        <script src="./lib/js/head.min.js"></script>
+        <script src="./js/reveal.js"></script>
+
+        <script>
+            function extend() {
+              var target = {};
+              for (var i = 0; i < arguments.length; i++) {
+                var source = arguments[i];
+                for (var key in source) {
+                  if (source.hasOwnProperty(key)) {
+                    target[key] = source[key];
+                  }
+                }
+              }
+              return target;
+            }
+
+            // Optional libraries used to extend on reveal.js
+            var deps = [
+              { src: './lib/js/classList.js', condition: function() { return !document.body.classList; } },
+              { src: './plugin/markdown/marked.js', condition: function() { return !!document.querySelector('[data-markdown]'); } },
+              { src: './plugin/markdown/markdown.js', condition: function() { return !!document.querySelector('[data-markdown]'); } },
+              { src: './plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+              { src: './plugin/zoom-js/zoom.js', async: true },
+              { src: './plugin/notes/notes.js', async: true },
+              { src: './plugin/math/math.js', async: true }
+            ];
+
+            // default options to init reveal.js
+            var defaultOptions = {
+              controls: true,
+              progress: true,
+              history: true,
+              center: true,
+              transition: 'default', // none/fade/slide/convex/concave/zoom
+              dependencies: deps
+            };
+
+            // options from URL query string
+            var queryOptions = Reveal.getQueryHash() || {};
+
+            var options = {};
+            options = extend(defaultOptions, options, queryOptions);
+            Reveal.initialize(options);
+        </script>
+        
+    </body>
+</html>
