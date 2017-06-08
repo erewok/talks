@@ -71,7 +71,7 @@ http://www.cs.ru.nl/~W.Swierstra/Publications/DataTypesALaCarte.pdf
 Interpretations can include:
 
 - Running a server
-- Writing clients (in any programming language)
+- Generating clients (in any programming language)
 - Documentation
 - Testing
 
@@ -113,14 +113,16 @@ If we go to this URI, we *GET* back something of the form *HTML* with content-ty
 ```haskell
 -- A sample thing to accept and/or return
 newtype Counter = Counter { value :: Int }
-  deriving (Generic, Show, Num)
-instance ToJSON Counter
-instance FromJSON Counter
+  deriving (Generic, Show, Num, ToJSON, FromJSON)
 
 type CounterHome = "counter-html" :> Get '[HTML] Html
-
 type CounterApi = "counter-post" :> Post '[JSON] Counter
-    :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
+    :<|> "counter-multiplier"
+         :> Capture "mult" Int
+         :> Post '[JSON] Counter
+    :<|> "counter-reset-post"
+         :> ReqBody '[JSON] Counter
+         :> Post '[JSON] Counter
 
 type SampleApi = CounterHome :<|> CounterApi
 
@@ -131,13 +133,16 @@ type SampleApi = CounterHome :<|> CounterApi
 ## A web endpoint or resource is a *type*
 
 ```haskell
-newtype Counter = Counter { value :: Int }
-    ...
+newtype Counter = Counter { value :: Int }...
 
 type CounterHome = "counter-html" :> Get '[HTML] Html
-
 type CounterApi = "counter-post" :> Post '[JSON] Counter
-    :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
+    :<|> "counter-multiplier"
+         :> Capture "mult" Int
+         :> Post '[JSON] Counter
+    :<|> "counter-reset-post"
+         :> ReqBody '[JSON] Counter
+         :> Post '[JSON] Counter
 
 type SampleApi = CounterHome :<|> CounterApi
 ```
@@ -154,7 +159,12 @@ A: Proxy, a stand-in *value* for a type
 
 ```haskell
 type CounterApi = "counter-post" :> Post '[JSON] Counter
-    :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
+    :<|> "counter-multiplier"
+         :> Capture "mult" Int
+         :> Post '[JSON] Counter
+    :<|> "counter-reset-post"
+         :> ReqBody '[JSON] Counter
+         :> Post '[JSON] Counter
 
 -- Here's the *value* representation of our CounterApi type
 counterApi :: Proxy CounterApi
@@ -168,10 +178,14 @@ counterApi = Proxy
 ```haskell
 -- The *type* of our API
 type CounterApi = "counter-post" :> Post '[JSON] Counter
-  :<|> "counter-multiplier" :> Capture "mult" Int :> Post '[JSON] Counter
-  :<|> "counter-reset-post" :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
-  :<|> "counter-queryparam" :> QueryParam "sortby" T.Text
-    :> Header "Some-Header" T.Text :> Get '[JSON] Counter
+  :<|> "counter-multiplier"
+    :> Capture "mult" Int :> Post '[JSON] Counter
+  :<|> "counter-reset-post"
+    :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
+  :<|> "counter-queryparam"
+    :> QueryParam "sortby" T.Text
+    :> Header "Some-Header" T.Text
+    :> Get '[JSON] Counter
 
 -- Our API as a Servant value
 counterApi :: Proxy CounterApi
@@ -189,9 +203,8 @@ Next step: interpreting our API
 ## Server Example
 
 ```haskell
--- Creating a counter that starts from 0
 newCounter :: IO (TVar Counter)
-newCounter = newTVarIO 0
+newCounter = newTVarIO 0  -- Create counter; start at 0
 
 -- Our Server
 server :: TVar Counter -> Server SampleApi
@@ -234,7 +247,8 @@ counterHome counter = do
 
 ```haskell
 type CounterApi = "counter-post" :> Post '[JSON] Counter
-    :<|> "counter-reset-post" :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
+    :<|> "counter-reset-post"
+        :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
     ...
 
 -- Our Server
@@ -243,7 +257,6 @@ server counter = ...
   :<|> counterReset counter
   ...
 
--- Reset Counter to POSTed Counter value
 counterReset :: MonadIO m => TVar Counter -> Counter -> m Counter
 counterReset oldCounter newCounter = liftIO . atomically $ do
   writeTVar oldCounter newCounter
@@ -318,13 +331,12 @@ counterReset oldCounter newCounter = liftIO . atomically $ do
 ## Client Example
 
 ```haskell
-
 module Main where
 
-import           Network.HTTP.Client (newManager, defaultManagerSettings)
-import           Servant.Client
+import Network.HTTP.Client (newManager, defaultManagerSettings)
+import Servant.Client
 
-import           Lib
+import Lib
 
 -- Haskell client generation
 postCounter

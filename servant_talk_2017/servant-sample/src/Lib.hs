@@ -17,9 +17,7 @@ import           Text.Blaze.Html5
 
 -- * A simple Counter data type
 newtype Counter = Counter { value :: Int }
-  deriving (Generic, Show, Num)
-instance ToJSON Counter
-instance FromJSON Counter
+  deriving (Generic, Show, Num, ToJSON, FromJSON)
 
 -- * Our Sample API type
 type CounterHome = "counter-html" :> Get '[HTML] Html
