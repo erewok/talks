@@ -48,7 +48,7 @@ http://alpmestan.com/servant/servant-wgp.pdf
 
 How to create "open" data types/functions?
 
-For a good description of this problem, read "Data Types A La Carte":
+For a good description, read "Data Types A La Carte":
 
 http://www.cs.ru.nl/~W.Swierstra/Publications/DataTypesALaCarte.pdf
 
@@ -74,6 +74,8 @@ Interpretations can include:
 - Servant is meant to be open/extensible:
   - Users can *extend* the capabilities of Servant library: new combinators, new content-types, etc.
   - Users can invent new ways to *interpret* Servant API types
+
+
 
 ---
 
