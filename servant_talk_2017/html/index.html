@@ -54,16 +54,9 @@ For a good description of this problem, read "Data Types A La Carte":
 
 http://www.cs.ru.nl/~W.Swierstra/Publications/DataTypesALaCarte.pdf
 </script></section><section data-markdown><script type="text/template">
-## Some Theoretical Takeaways
+## Working with Servant: Core Ideas
 
-- APIs are type-safe
-- Servant is meant to be open/extensible:
-  - Users can invent new ways to *interpret* Servant API types
-  - Users can *extend* the capabilities of Servant library: new combinators, new content-types, etc.
-</script></section><section data-markdown><script type="text/template">
-## Core Servant Ideas
-
-1. "Describe" an API and then
+1."Describe" an API and then
 2. Build interpretations
 
 Interpretations can include:
@@ -72,6 +65,13 @@ Interpretations can include:
 - Generating clients (in any programming language)
 - Documentation
 - Testing
+</script></section><section data-markdown><script type="text/template">
+## Some Theoretical Takeaways
+
+- APIs are type-safe
+- Servant is meant to be open/extensible:
+  - Users can *extend* the capabilities of Servant library: new combinators, new content-types, etc.
+  - Users can invent new ways to *interpret* Servant API types
 </script></section></section><section ><section data-markdown><script type="text/template">
 ## Servant: A library (or DSL) for *Describing* APIs
 
@@ -89,14 +89,6 @@ import Servant
 
 type CounterHome = "counter-html" :> Get '[HTML] Html
 ```
-</script></section><section data-markdown><script type="text/template">
-## A web endpoint/resource is a *type*
-
-```haskell
-type CounterHome = "counter-html" :> Get '[HTML] Html
-```
-
-If we go to this URI, we *GET* back something of the form *HTML* with content-type of 'html'.
 </script></section><section data-markdown><script type="text/template">
 ## We can also combine APIs
 

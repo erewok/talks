@@ -54,18 +54,9 @@ http://www.cs.ru.nl/~W.Swierstra/Publications/DataTypesALaCarte.pdf
 
 ----
 
-## Some Theoretical Takeaways
+## Working with Servant: Core Ideas
 
-- APIs are type-safe
-- Servant is meant to be open/extensible:
-  - Users can invent new ways to *interpret* Servant API types
-  - Users can *extend* the capabilities of Servant library: new combinators, new content-types, etc.
-
-----
-
-## Core Servant Ideas
-
-1. "Describe" an API and then
+1."Describe" an API and then
 2. Build interpretations
 
 Interpretations can include:
@@ -74,6 +65,15 @@ Interpretations can include:
 - Generating clients (in any programming language)
 - Documentation
 - Testing
+
+----
+
+## Some Theoretical Takeaways
+
+- APIs are type-safe
+- Servant is meant to be open/extensible:
+  - Users can *extend* the capabilities of Servant library: new combinators, new content-types, etc.
+  - Users can invent new ways to *interpret* Servant API types
 
 ---
 
@@ -95,16 +95,6 @@ import Servant
 
 type CounterHome = "counter-html" :> Get '[HTML] Html
 ```
-
-----
-
-## A web endpoint/resource is a *type*
-
-```haskell
-type CounterHome = "counter-html" :> Get '[HTML] Html
-```
-
-If we go to this URI, we *GET* back something of the form *HTML* with content-type of 'html'.
 
 ----
 
