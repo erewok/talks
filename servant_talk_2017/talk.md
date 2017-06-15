@@ -56,8 +56,8 @@ http://www.cs.ru.nl/~W.Swierstra/Publications/DataTypesALaCarte.pdf
 
 ## Working with Servant: Core Ideas
 
-1."Describe" an API and then
-2. Build interpretations
+1) "Describe" an API and 2) Build interpretations
+
 
 Interpretations can include:
 
@@ -312,7 +312,9 @@ counterReset oldCounter newCounter = liftIO . atomically $ do
 - Authentication & sessions can be tough
 - Uploading files is not quite implemented
 - Returning Errors as JSON*
+- Testing??
 
+*I have a gist for an example of this
 
 ---
 
