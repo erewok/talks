@@ -56,8 +56,8 @@ http://www.cs.ru.nl/~W.Swierstra/Publications/DataTypesALaCarte.pdf
 </script></section><section data-markdown><script type="text/template">
 ## Working with Servant: Core Ideas
 
-1."Describe" an API and then
-2. Build interpretations
+1) "Describe" an API and 2) Build interpretations
+
 
 Interpretations can include:
 
@@ -177,9 +177,6 @@ Next step: interpreting our API
 ## Server Example
 
 ```haskell
-newCounter :: IO (TVar Counter)
-newCounter = newTVarIO 0  -- Create counter; start at 0
-
 -- Our Server
 server :: TVar Counter -> Server SampleApi
 server counter = counterHome counter
@@ -190,7 +187,7 @@ server counter = counterHome counter
 
 main :: IO ()
 main = do
-  cntr <- newCounter
+  cntr <- newTVarIO 0  -- Create counter; start at 0
   Warp.run 8000 (serve sampleApi $ server cntr)
 ```
 
@@ -282,7 +279,9 @@ counterReset oldCounter newCounter = liftIO . atomically $ do
 - Authentication & sessions can be tough
 - Uploading files is not quite implemented
 - Returning Errors as JSON*
+- Testing??
 
+*I have a gist for an example of this
 </script></section></section><section ><section data-markdown><script type="text/template">
 ## Interpretation II: Generating Client code (Haskell, Javascript, Python...)
 </script></section><section data-markdown><script type="text/template">

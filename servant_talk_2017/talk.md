@@ -195,9 +195,6 @@ Next step: interpreting our API
 ## Server Example
 
 ```haskell
-newCounter :: IO (TVar Counter)
-newCounter = newTVarIO 0  -- Create counter; start at 0
-
 -- Our Server
 server :: TVar Counter -> Server SampleApi
 server counter = counterHome counter
@@ -208,7 +205,7 @@ server counter = counterHome counter
 
 main :: IO ()
 main = do
-  cntr <- newCounter
+  cntr <- newTVarIO 0  -- Create counter; start at 0
   Warp.run 8000 (serve sampleApi $ server cntr)
 ```
 
