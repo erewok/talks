@@ -309,47 +309,56 @@ type StateM a = State -> (a, State)
 type State = Int
 
 instance Monad State where
-    return x = \s -> (x, s)
-    m >>= k = \s -> let (a, newState) = m s
-                        (b, finalState) = k a newState
-                    in  (b, finalState)
+    return x = \state -> (x, state)
+    m >>= k = \startState -> let (a, newState) = m startState
+                                 (b, finalState) = k a newState
+                             in  (b, finalState)
 ```
 
-The `bind` instance here may be tough to interpret, but we can let the types guide us. Here's a more fleshed-out version of the `bind`, which may make it easier to see what's happening. 
+The `bind` instance here may be tough to interpret, but we can let the types guide us. Here's a more fleshed-out version of the `bind`, which may make it easier to see what's happening.
 
-First, `m` is whatever value we're wrapping, included inside a function. `m` is waiting for an argument:
+First, `m` is whatever value we're wrapping, included inside a function. It's also waiting for the state argument:
 
 ```haskell
-m = \n -> (a, n)
+m = \startState -> (a, startState)
 ```
 
 `k` is the middle argument to bind, something like this:
 
 ```haskell
 k :: a -> M b
-k :: a -> (\o -> (a, o))
+k :: a -> (newState -> (a, newState))
 
 -- because of the associativity of function arrows, we can write it like this:
-k :: a -> o -> (a, o)
+k :: a -> newState -> (a, newState)
 ```
 
-`bind`, then, does the following:
+This is why `k a newState` appears in the definition above.
+
+`bind` does the following:
 
 1. Run the first function in `m` with an argument to be provided.
 1. Take the result and State from running that function and pass those to `k`.
 1. Return the final wrapped value from running `k`.
 
-Another key takeway: both the `M a` at the beginning and `M b` as the final return value are functions in this monadic instance. Thus, `bind` will also return a function.
+The function type ends up being something like this:
+
+```haskell
+(>>=) :: M a -> (a -> M b) -> M b
+(>>=) :: (s -> (a, s)) -> (a -> t -> (b, t)) -> (t -> (b, t))
+```
+
+Another key takeway: both the `M a` at the beginning and `M b` as the final return value are functions in this monadic instance. Thus, `bind` will also return a function that's waiting for an argument. It needs a starting state to kick off the computation.
 
 ## Section 3: Laws
 
-Our monad implementations must follow three laws:
+All monad implementations must follow three laws:
 
 - Left identity
 - Right identity
 - Associativity (in other words: it doesn't matter where you put the parentheses)
 
-These laws keep us honest and prevent unexpected evaluation or strange things. However, Haskell won't tell if your `Monad` instance is lawful, but it is considered bad form in the community *not* to have a lawful instance.
+These laws keep us honest and prevent unexpected evaluation or strange things. However, Haskell won't tell you if your `Monad` instance is lawful, but it is considered bad form in the community *not* to have a lawful instance.
 
 ## Left Identity
 
