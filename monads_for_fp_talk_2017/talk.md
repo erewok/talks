@@ -302,7 +302,7 @@ Equational reasoning: "unfolding the definitions and simplifying" yields the eva
 
 ## How Do We Implement the Monad Instance for State
 
-The key is always in how the two operations `return` and `>>=` are implemented:
+The key is always in how the two operations `return` and `>>=` (also called `bind`) are implemented:
 
 ```haskell
 type StateM a = State -> (a, State)
@@ -313,19 +313,33 @@ instance Monad State where
     m >>= k = \s -> let (a, newState) = m s
                         (b, finalState) = k a newState
                     in  (b, finalState)
-
- -- we wrap `a` in a function!
--- what does it mean to "unwrap `a`" here??
-type StateM a = State -> (a, State)
-type State = Int  -- "state" is an execution counter
-
-instance Monad StateM where
-  return a = \n -> (a, n)
-
-  m >>= k = \x -> let (a, y) = m x
-                      (b, z) = k a y
-                  in (b, z)
 ```
+
+The `bind` instance here may be tough to interpret, but we can let the types guide us. Here's a more fleshed-out version of the `bind`, which may make it easier to see what's happening. 
+
+First, `m` is whatever value we're wrapping, included inside a function. `m` is waiting for an argument:
+
+```haskell
+m = \n -> (a, n)
+```
+
+`k` is the middle argument to bind, something like this:
+
+```haskell
+k :: a -> M b
+k :: a -> (\o -> (a, o))
+
+-- because of the associativity of function arrows, we can write it like this:
+k :: a -> o -> (a, o)
+```
+
+`bind`, then, does the following:
+
+1. Run the first function in `m` with an argument to be provided.
+1. Take the result and State from running that function and pass those to `k`.
+1. Return the final wrapped value from running `k`.
+
+Another key takeway: both the `M a` at the beginning and `M b` as the final return value are functions in this monadic instance. Thus, `bind` will also return a function.
 
 ## Section 3: Laws
 
@@ -396,7 +410,11 @@ Specialized to our Exceptions Example:
 Except a >>= \x -> f x >>= g
 ```
 
+ TO DO
+
 ## Section 5: Parsers
+
+ TO DO
 
 
 ## Why Are Monads Interesting
