@@ -51,6 +51,7 @@ The 80s:
 - One bound variable
 - Function body
 - Only functions allowed so all functions are higher order.
+- Apply arguments by separating from function with whitespace.
 
 Free (not bound) variables may also appear.
 
@@ -91,7 +92,7 @@ If we have a `0` and `succ` function, then `1` is `succ 0` and `2` is `succ 1`, 
 def zero = 𝝺x.x
 def succ = 𝝺n.𝝺s((s false) n)
 
--- one, for example, substitute `false` for definition above
+-- one, for example: substitute `false` for definition above
 def one = 𝝺s((s false) 𝝺x.x)
  -> 𝝺s((s 𝝺first.𝝺second.second) 𝝺x.x)
 
@@ -127,7 +128,7 @@ ident ...
 
 Here `a` is a type variable. This function is polymorphic so `a` can be anything in the Haskell universe.
 
-Only one valid definition of this function (Haskellers don't even need to see the function body to know it):
+Pretty much one valid definition for this function:
 
 ```haskell
 ident :: a -> a
@@ -154,10 +155,10 @@ This function *cannot* operate on anything but the `Double` that is its first ar
 
 ## Monads Paper Section 1: Introduction
 
+Haskell had a side effect problem. Monads were a useful abstraction that *helped to solve that problem* among other problems.
+
 - Wadler was inspired by Eugenio Moggi's work on monads
 - Monads are used to "integrate impure effects into pure functional languages"
-
-Haskell had a side effect problem. Monads were a useful abstraction that *helped to solve that problem* among other problems.
 
 Category Theory also makes other appearances in Haskell: Functor, Applicative, Monad, Monoid, etc.
 
@@ -436,6 +437,7 @@ Thus, managing side effects is one strategy for managing bugs in software.
 
 ## Closing Points
 
+- Edward Kmett (paraphrasing): "Monads are data structures with two operations and three laws. That's it."
 - Monads are not simply a solution to the problem of IO.
 - Monads are not impure.
 - Monads are not only about side effects.
