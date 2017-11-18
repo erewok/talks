@@ -1,5 +1,4 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 
 module Lib where
 
@@ -31,6 +30,10 @@ answer = Div (Div (Con 1972) (Con 2)) (Con 23)
 -- This one typechecks, but will throw a runtime error
 error :: Term
 error = Div (Con 1) (Con 0)
+
+-- An Extra one that's bigger than the others
+bigDiv :: Term
+bigDiv = Div (Div (Div (Con 1972) (Con 2)) (Con 23)) (Con 7)
 
 
 -- First motivating example: raising exceptions
@@ -65,7 +68,7 @@ evalState (Div t u) = StateM (\x-> let (a, y) = (runState $ evalState t) x
 
 -- Third motiviating example: tracing execution (such as debug or print statements)
 -- Also can't do it as a type synonym. It gets a bit more verbose, but same idea...
-newtype DebugM a = DebugM (Output, a)
+newtype DebugM a = DebugM (Output, a) deriving Show
 type Output = String
 
 evalDebug :: Term -> DebugM Int
@@ -87,7 +90,8 @@ class Monad m where
   (>>=) :: m a -> (a -> m b) -> m b  -- Wadler uses `*` here, but this is the `bind` operator in Haskell
 
 -- Next, Wadler shows how all of the different `eval...` functions defined above can be collapsed into one
--- by using the monad operations
+-- by using the monad operations. This function works for anything implementing `Monad` operations
+-- but the 3 examples given by Wadler will each need to tweak this function a bit.
 eval :: (Monad m) => Term -> m Int
 eval (Con a) = return a
 eval (Div t u) =
@@ -95,9 +99,8 @@ eval (Div t u) =
   \a -> eval u >>=
   \b -> return (a `div` b)
 
-
--- Now that we have a class definition, we need to teach the compiler how each of our data types
--- may behave as a monad. We do this by defining instances
+-- Now that we have a `Monad` class definition, we need to teach the compiler how each of our data types
+-- may behave as a monad. We do this by defining instances of `Monad` for each one.
 
 -- ExceptM as a Monad
 instance Monad ExceptM where
@@ -114,9 +117,13 @@ raise e = Raise e
 instance Monad StateM where
   return a = StateM (\s -> (a, s))
   m >>= k = StateM (\s ->
-                      let (a, y) = (runState m) s
+                      let (a, y) = runState m s
                           (b, z) = runState (k a) y
                       in (b, z))
+
+-- helper function for ticking along the state
+tick :: StateM ()
+tick = StateM (\x -> ((), x+1))
 
 -- DebugM as a Monad
 instance Monad DebugM where
@@ -125,3 +132,37 @@ instance Monad DebugM where
     where result = let DebugM (firstOutput, a) = m
                        DebugM (secondOutput, b) = k a
                    in (firstOutput ++ secondOutput, b)
+
+-- Helper function for starting the output composition
+debug :: Output -> DebugM ()
+debug x = DebugM (x, ())
+
+
+-- `eval` alone won't properly handle the "divide by zero" exception, so we need to define this one:
+evalExcept' :: Term -> ExceptM Int
+evalExcept' (Con a) = return a
+evalExcept' (Div t u) =
+  eval t >>=
+  \a -> evalExcept' u >>=
+  \b -> if b == 0
+           then raise "divide by zero error"
+           else return (a `div` b)
+
+
+-- In addition, we need to inject the `tick` function in for state, so we still need this one too
+evalState' :: Term -> StateM Int
+evalState' (Con a) = return a
+evalState' (Div t u) =
+  eval t >>=
+  \a -> eval u >>=
+  \b -> tick >>=
+  \_ -> return (a `div` b)
+
+-- finally. we need to adjust `eval` in the case of our Ouptut version as well
+evalDebug' :: Term -> DebugM Int
+evalDebug' (Con a) = debug (line (Con a) a) >>= \_ -> return a
+evalDebug' (Div t u) =
+  eval t >>=
+  \a -> eval u >>=
+  \b -> debug (line (Div t u) (a `div` b)) >>=
+   \_ -> return (a `div` b)
