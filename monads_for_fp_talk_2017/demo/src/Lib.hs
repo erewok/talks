@@ -11,6 +11,8 @@ import Prelude (Int
                , show
                , (.)
                , ($)
+               , Eq
+               , Bool
                , (==))
 
 
@@ -39,7 +41,7 @@ bigDiv = Div (Div (Div (Con 1972) (Con 2)) (Con 23)) (Con 7)
 -- First motivating example: raising exceptions
 data ExceptM a = Raise Exception
                | Return a
-               deriving Show
+               deriving (Show, Eq)
 type Exception = String
 
 evalExcept :: Term -> ExceptM Int
@@ -153,8 +155,8 @@ evalExcept' (Div t u) =
 evalState' :: Term -> StateM Int
 evalState' (Con a) = return a
 evalState' (Div t u) =
-  eval t >>=
-  \a -> eval u >>=
+  evalState' t >>=
+  \a -> evalState' u >>=
   \b -> tick >>=
   \_ -> return (a `div` b)
 
@@ -162,7 +164,36 @@ evalState' (Div t u) =
 evalDebug' :: Term -> DebugM Int
 evalDebug' (Con a) = debug (line (Con a) a) >>= \_ -> return a
 evalDebug' (Div t u) =
-  eval t >>=
-  \a -> eval u >>=
+  evalDebug' t >>=
+  \a -> evalDebug' u >>=
   \b -> debug (line (Div t u) (a `div` b)) >>=
    \_ -> return (a `div` b)
+
+
+-- Section 3: Monad laws
+-- Wadler says that for something to be a monad it must implement the 2 operations and also satisfy 3 laws.
+-- Here are the laws
+-- [Left Identity]
+-- return a >>= k  =  k a
+-- [Right Identity]
+-- m >>= return =  m
+-- [Associativity]
+-- m >>= (\x -> k x >>= h)  =  (m >>= k) >>= h
+-- We can show how these hold for our ExceptM monad defined above.
+
+-- First, in left identity, the bind operator (`>>=`) will unnpack a monadic value `M a` to get the `a`,
+-- which it will pass to a function with a signature like this k :: (a -> M b).
+-- `return` wraps up `a` value into an `M a`.
+-- Thus, first wrapping the `a` with `return` and then using bind to send it to function `k`
+-- is the same as sending it directly to `k` without first wrapping it:
+leftId :: Int -> (Int -> ExceptM Int) -> Bool
+leftId n k = return n >>= k == k n
+
+-- Next, in right identity, we recognize that `return` is another type of function `(a -> M b)` except in this case, it's `(a -> M a`).
+-- Thus, we can take a monadic value `M a`, use `bind` to unwrap it, and then send it through to `return`
+-- and it will be like we've done nothing at all.
+rightId :: ExceptM Int -> Bool
+rightId m = (m >>= return) == m
+
+-- Finally, associativity shows how the placement of the parentheses doesn't really matter.
+-- In other words, it doesn't matter where the parentheses are placed, computations will produce the same results.
