@@ -33,19 +33,21 @@ main = do
   putStrLn divider
 
   -- State!
-  putStrLn "Run: State Evaluator specialized function for state (not monadic)"
+  putStrLn "Run: State Evaluator specialized function for StateM (not monadic)"
   print $ L.runState (L.evalState L.answer) 0
+  print $ L.runState (L.evalState L.bigDiv) 0
   putStrLn divider
 
   -- StateM Monads below
   putStrLn "Run: State Evaluation using StateM Monad instance"
   -- Eval doesn't know what type of thing it should produce
   print $ L.runState (L.evalState' L.answer :: L.StateM Int) 0
+  putStrLn "Here's a computation with 3 `divs`"
   print $ L.runState (L.evalState' L.bigDiv :: L.StateM Int) 0
   putStrLn divider
 
   -- Debuggin It!
-  putStrLn "Run: Debug Evaluator specialized function for state (not monadic)"
+  putStrLn "Run: Debug Evaluator specialized function for DebugM (not monadic)"
   let (L.DebugM (output, answer)) = L.evalDebug L.answer
   putStrLn output
   print answer

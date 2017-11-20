@@ -144,7 +144,7 @@ debug x = DebugM (x, ())
 evalExcept' :: Term -> ExceptM Int
 evalExcept' (Con a) = return a
 evalExcept' (Div t u) =
-  eval t >>=
+  evalExcept' t >>=
   \a -> evalExcept' u >>=
   \b -> if b == 0
            then raise "divide by zero error"
