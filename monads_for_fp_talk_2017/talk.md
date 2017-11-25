@@ -44,17 +44,16 @@ The 80s:
 
 "Most of you use programming languages that were invented and you can tell."
 
-- Philip Wadler in "Propositions As Types", Strange Loop Conference, 2014
+- Philip Wadler in "Propositions As Types" talk, Strange Loop Conference, 2014
 
 ## Lambda Calculus Defined
 
 - Functions only
 - One bound variable
+- Free variables
 - Function body
-- Only functions allowed so all functions are higher order.
-- Apply arguments by separating from function with whitespace.
-
-Free (not bound) variables may also appear.
+- Only functions allowed so *all* functions are higher order.
+- Apply arguments by placing them adjacent to function (whitespace, not parentheses).
 
 ## Some Lambda Calculus
 
@@ -70,13 +69,17 @@ The "self-application function":
 𝝺s.(s s)
 ```
 
-## A beta reduction (calculating results)
+## Beta Reduction
+
+Here's a computation: the "self-application function" is applied to the identity function:
 
 ```haskell
 𝝺s.(s s) 𝝺x.x
   -> (𝝺x.x 𝝺x.x)
     -> 𝝺x.x
 ```
+
+We can't reduce any more so this equation is in "normal form."
 
 ## Representing Bools
 
@@ -93,7 +96,7 @@ If we have a `0` and `succ` function, then `1` is `succ 0` and `2` is `succ 1`, 
 def zero = 𝝺x.x
 def succ = 𝝺n.𝝺s((s false) n)
 
--- one, for example: substitute `false` for definition above
+-- one, for example: substitute `false` with its definition above
 def one = 𝝺s((s false) 𝝺x.x)
  -> 𝝺s((s 𝝺first.𝝺second.second) 𝝺x.x)
 
@@ -143,15 +146,15 @@ Primary Haskell Implementer's Goals:
 - Laziness
 - Functional Programming based on Typed Lambda Calculus (System F)
 
-A side effect of laziness: **purity**. 
-
 Laziness means that all computations are deferred until they're needed.
 
 This means that computations don't respect the order in which they appear in code.
 
 Imagine what happens when side effects fire only when an expression has been determined to be needed?
 
-## Haskell's Laziness continued
+**Purity** is a side effect of laziness.
+
+## Haskell's Laziness: the Reason for Its Purity
 
 "An immediate consequence of laziness is that evaluation order is demand-driven. As a result, it becomes more or less impossible to *reliably* perform input/output or other side effects as the result of a function call. Haskell is, therefore, a pure language. For example, if a function `f` has type `Int -> Int` you can be sure that `f` will not read or write any mutable variables, nor will it perform any input/output. In short, `f` really is a function in the mathematical sense: every call (`f 3`) will return the same value."
 
@@ -162,8 +165,6 @@ Consider a function with this type signature:
 ```haskell
 square :: Double -> Double
 ```
-
-This function *cannot* operate on anything but the `Double` that is its first argument and it can do nothing outside of returning a `Double`. It cannot print to the screen. It cannot read a file or write a file. It can't talk to the internet. Every invocation with a particular argument will *always* return the same result.
 
 "A function can only read what is supplied to it in its arguments and the only way it can have an effect on the world is through the values it returns." (Dan Piponi, "You Could Have Invented Monads")
 
@@ -178,16 +179,17 @@ This means you couldn't write a program in the language that did the following:
 - Read files
 - Write files
 
-This was a kind of problem. We'll call this "Haskell's side effect problem."
+This was a kind of a problem. We'll call this "Haskell's side effect problem."
 
 ## Monads Paper Section 1: Introduction
 
 Monads were a useful abstraction that *helped to solve the "side effect problem"* among other problems.
 
+- Origin in Category Theory
 - Wadler was inspired by Eugenio Moggi's work on monads
 - Monads are used to "integrate impure effects into pure functional languages"
 
-Category Theory also makes other appearances in Haskell: Functor, Applicative, Monad, Monoid, etc.
+(Category Theory also makes other appearances in Haskell: Functor, Applicative, Monad, Monoid, etc.)
 
 ## Section 2: Evaluating Monads
 
@@ -207,6 +209,7 @@ eval :: Term -> Int
 eval (Con a) = a
 eval (Div t u) = eval t `div` eval u
 ```
+
 `Term` is a recursive data structure: it may contain nested `Term`s. When we evaluate `Div`, we must evaluate the left and right sides before running the `div` operation.
 
 ```haskell
@@ -270,7 +273,7 @@ Notice: it still looks like lambda calculus and follows equational reasoning. In
 - 2 operations
 - 3 laws
 
-Haskellers are sensitive about different metaphors for linking all monads together.
+Haskellers are sensitive about different metaphors for linking all monads together: "wrapper", "action", "context", "side effect", "strategy".
 
 ## Monad Operations
 
@@ -302,14 +305,10 @@ instance Monad ExceptM where
                Return a -> k a
 ```
 
-Look closely at the following: `(a -> m b)`.
-
 The type signatures and definitionsfor `ExceptM` say:
 
 1. We have the result from some computation that may have raised an error.
 1. We want to pass this result to a new function, which may itself raise an error.
-
-Thus, `bind` evalutes the strategy which produces the `a` and passes this to a function `(a -> M b)`, which produces a new strategy for a `b`.
 
 ## Ordering and Side Effects
 
@@ -339,16 +338,13 @@ Notice: the free variable `a` looks just like a lambda calculus reduction: it's 
 type StateM a = State -> (a, State)
 type State = Int
 
+-- (technically, invalid Haskell below. See repo for actual code.)
 instance Monad State where
     return x = \state -> (x, state)
     m >>= k = \startState -> let (a, newState) = m startState
                                  (b, finalState) = k a newState
                              in  (b, finalState)
 ```
-
-The `bind` instance here may be tough to interpret, but we can let the types guide us.
-
-A more fleshed-out version of `bind` may make it easier to see what's happening.
 
 ## StateM `bind` Operation Evaluated
 
@@ -364,20 +360,20 @@ It's waiting for the state argument to start the computation:
 
 ```haskell
 k :: a -> M b
-k :: a -> (newState -> (a, newState))  -- specialized to our `StateM`
+k :: a -> (state -> (b, newState))  -- specialized to our `StateM`
 
 -- because of the associativity of function arrows, we can write it like this:
-k :: a -> newState -> (a, newState)
+k :: a -> state -> (b, newState)
 ```
 
 This is why `k a newState` appears in the definition above.
 
 ## StateM `bind` Operation Summary
 
-Thus, `bind` here does the following:
+`bind` here does the following:
 
 1. Run the first function in `m` with an argument to be provided.
-1. Take the result and State from running that function and pass both of those to `k`.
+1. Take the result *and* State from running the first function and pass both of those to `k`.
 1. Return the final wrapped value from running `k`.
 
 The function type ends up being something like this:
@@ -387,7 +383,7 @@ The function type ends up being something like this:
 (>>=) :: (s -> (a, s)) -> (a -> t -> (b, t)) -> (t -> (b, t))
 ```
 
-Another key takeway: both the `M a` at the beginning and `M b` as the final return value are functions in this monadic instance. Thus, `bind` will also return a function that's waiting for an argument. It simply needs a starting state to kick off the whole computation, which functions like a composition.
+Both the `M a` at the beginning and `M b` as the final return value are *functions* in this monadic instance. Thus, `bind` will also return a function that's waiting for an argument. It simply needs a starting state to kick off the whole computation, which composes them together.
 
 ## Section 3: Laws
 
@@ -397,7 +393,7 @@ All monad implementations must follow three laws:
 - Right identity
 - Associativity (in other words: it doesn't matter where you put the parentheses)
 
-These laws keep us honest and prevent unexpected evaluation or strange things. However, Haskell won't tell you if your `Monad` instance is lawful, but it is considered bad form in the community *not* to have a lawful instance.
+These laws keep us honest and prevent unexpected evaluation or strange things.
 
 ## Left Identity
 
@@ -408,14 +404,14 @@ return a >>= k = k a
 Specialized to our Exceptions Example:
 
 ```haskell
-return a :: a -> Except a
-k :: a -> Except b
-(>>=) :: Except a -> (a -> Except b) -> Except b
+return a :: a -> ExceptM a
+k :: a -> ExceptM b
+(>>=) :: ExceptM a -> (a -> ExceptM b) -> ExceptM b
 ```
 
 This says the following:
 
-1. Wrap up a value in the monad, `Except a`, then
+1. Wrap up a value in the monad, `ExceptM a`, then
 1. Pass the wrapped value to `bind`, which will unwrap it, and then
 1. Pass the unwrapped `a` to `k`, which will then return a new wrapped value
 
@@ -430,8 +426,8 @@ m >>= return = m
 Specialized to our Exceptions Example:
 
 ```haskell
-Except a >>= return
-(>>=) :: Except a -> (a -> Except b) -> Except b
+ExceptM a >>= return
+(>>=) :: ExceptM a -> (a -> ExceptM a) -> ExceptM a
 ```
 
 `bind` in this case will unwrap the left side `a` and pass it to the function `return`, which returns `Except a`.
@@ -452,7 +448,7 @@ Thus, right identity says this:
 Specialized to our Exceptions Example:
 
 ```haskell
-Except a >>= \x -> f x >>= g
+ExceptM a >>= \x -> f x >>= g
 ```
 
  TO DO
@@ -464,6 +460,7 @@ Except a >>= \x -> f x >>= g
 ## Why Are Monads Interesting
 
 - Preservation of referential transparency: if `f` is a pure function, `f 3` will always and forever return the same value.
+- Referential transparency is not broken by monads*.
 - "Out of the Tar Pit": Accidental and Necessary Complexity. One source of complexity: side effects.
 - Managing side effects is one strategy for managing bugs in software.
 
@@ -472,6 +469,12 @@ Except a >>= \x -> f x >>= g
 "Whether a pure language (with monadic effects) is ultimately the best way to write programs is still an open question, but it certainly is a radical and elegant attack on the challenge of programming, and it was that combination of power and beauty that motivated the designers. In retrospect, therefore, perhaps the biggest single benefit of laziness is not laziness per se, but rather that **laziness kept us pure**, and thereby motivated a great deal of productive work on monads and encapsulated state."
 
 from "History of Haskell"
+
+## What Can Other (non-FP) Languages Learn from Monads
+
+- They're probably already using them.
+- Difference of terminology ("Maybe Monad" vs "andThen", "futures" and "callbacks").
+- Mathematical terms link coding concepts to scholarship for the same ideas present in Mathematics.
 
 ## Closing Points
 
