@@ -1,23 +1,34 @@
----
-title: Monads for Functional Programming
-separator: <!--s-->
-verticalSeparator: <!--v-->
-theme: solarized
-revealOptions:
-    transition: 'fade'
----
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Monads for Functional Programming</title>
+        <link rel="stylesheet" href="./css/reveal.css">
+        <link rel="stylesheet" href="./css/theme/solarized.css" id="theme">
+        <link rel="stylesheet" href="./css/highlight/zenburn.css">
+        <link rel="stylesheet" href="./css/print/paper.css" type="text/css" media="print">
+
+		<script>
+		  document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] +
+		  ':35729/livereload.js?snipver=1"></' + 'script>')
+		</script>
+    </head>
+    <body>
+
+        <div class="reveal">
+            <div class="slides"><section ><section data-markdown><script type="text/template">
 
 ## Monads for Functional Programming
 
 Philip Wadler, 1992
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 > A monad is just a monoid in the category of endofunctors, what's the problem?
 
 from "A Brief, Incomplete, and Mostly Wrong History of Programming Languages"
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Some Questions
 
@@ -25,7 +36,7 @@ from "A Brief, Incomplete, and Mostly Wrong History of Programming Languages"
 - How does the monad work?
 - Why is the solution interesting beyond the world of Haskell?
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Our Approach in this Talk
 
@@ -35,13 +46,13 @@ from "A Brief, Incomplete, and Mostly Wrong History of Programming Languages"
 - Close reading of Sections 1 through 3 of the paper
 - Light reading of Section 5
 
-<!--s-->
+</script></section></section><section ><section data-markdown><script type="text/template">
 
 Q: What's a functional programming language?
 
 A: A language based on Lambda Calculus.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Chronology of FP
 
@@ -52,7 +63,7 @@ A: A language based on Lambda Calculus.
 - Mid-80s: Lots of Pure, Lazy FP languages; Simon Peyton Jones calls this period "a tower of Babel".
 - 1987: First Haskell meeting.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Broader Context; the 80s
 
@@ -60,7 +71,7 @@ A: A language based on Lambda Calculus.
 - Desire for a *research* programming language for PL researchers to use.
 - Desire for languages with rigorous mathematical and theoretical foundations.
 
-<!--s-->
+</script></section></section><section ><section data-markdown><script type="text/template">
 
 ## Lambda Calculus
 
@@ -76,7 +87,7 @@ The "self-application function":
 𝝺s.(s s)
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Beta Reduction 1
 
@@ -87,7 +98,7 @@ The "self-application function":
 
 We can't reduce any more so this equation is in "normal form."
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Beta Reduction 2
 
@@ -97,7 +108,7 @@ We can't reduce any more so this equation is in "normal form."
     -> 𝝺x.x
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Representing Bools
 
@@ -106,7 +117,7 @@ def true = 𝝺first.𝝺second.first
 def false = 𝝺first.𝝺second.second
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Representing Numbers
 
@@ -121,7 +132,7 @@ def one = 𝝺s((s false) 𝝺x.x)
  -> 𝝺s((s 𝝺first.𝝺second.second) 𝝺x.x)
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ## Using Numbers
 
@@ -140,7 +151,7 @@ def iszero = 𝝺n(n 𝝺first.𝝺second.first)
      -> 𝝺first.𝝺second.second -- `false`
 ```
 
-<!--s-->
+</script></section></section><section ><section data-markdown><script type="text/template">
 
 ### Haskell is Lambda Calculus
 
@@ -156,7 +167,7 @@ Lambda Calculus ->
 
 Wadler: "Pure languages are lambda calculus pure and simple"
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Consider the Identity Function
 
@@ -174,7 +185,7 @@ ident :: a -> a
 ident arg = arg
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Haskell's Laziness
 
@@ -185,11 +196,11 @@ Primary Haskell Implementer's Goals:
 
 **Purity** is a side effect of laziness.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 > An immediate consequence of laziness is that evaluation order is demand-driven. As a result, it becomes more or less impossible to *reliably* perform input/output or other side effects as the result of a function call. For example, if a function `f` has type `Int -> Int` you can be sure that `f` will not read or write any mutable variables, nor will it perform any input/output. In short, `f` really is a function in the mathematical sense...
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Haskell's Purity
 
@@ -201,7 +212,7 @@ square :: Double -> Double
 
 "A function can only read what is supplied to it in its arguments and the only way it can have an effect on the world is through the values it returns." (Dan Piponi, "You Could Have Invented Monads")
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Haskell's Side Effect Problem
 
@@ -212,7 +223,7 @@ As a result of purity, Haskell could not compute side effects, such as:
 - Read files
 - Write files
 
-<!--s-->
+</script></section></section><section ><section data-markdown><script type="text/template">
 
 ### Monads Paper Section 1: Introduction
 
@@ -222,7 +233,7 @@ As a result of purity, Haskell could not compute side effects, such as:
 
 (Category Theory also makes other appearances in Haskell: Functor, Applicative, Monad, Monoid, etc.)
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Evaluator with three motivating examples
 
@@ -230,7 +241,7 @@ As a result of purity, Haskell could not compute side effects, such as:
 - Count operations
 - Add execution trace (printing, debugging)
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Simple Evaluator: First Attempt
 
@@ -247,7 +258,7 @@ eval (Div t u) = eval t `div` eval u
 *** Exception: divide by zero
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Motivating Examples: Exceptions, State, Execution Trace
 
@@ -266,7 +277,7 @@ data M a = (Output, a)
 type Output = String
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Evaluation With Exceptions
 
@@ -290,11 +301,11 @@ eval (Div t u) = case eval t of
 
 Notice: it still looks like lambda calculus. In other words: it's still "pure"!
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 > The original evaluator has the type `Term -> Int`, while in each variation its type took the form `Term -> M Int`. In general, a function of type `a -> b` is replaced by a function of type `a -> M b`. This can be read as a function that accepts an argument of type `a` and returns a result of type `b` with **a possible additional effect captured by `M`.**
 
-<!--s-->
+</script></section></section><section ><section data-markdown><script type="text/template">
 
 ### What Is a Monad
 
@@ -302,7 +313,7 @@ Notice: it still looks like lambda calculus. In other words: it's still "pure"!
 - 2 operations
 - 3 laws
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Caution: Metaphors May Lead to Errors
 
@@ -316,14 +327,14 @@ Notice: it still looks like lambda calculus. In other words: it's still "pure"!
 
 "strategy"
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### What's a Monad
 
 - 2 operations
 - 3 laws
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### The 2 Monad Operations in Haskell
 
@@ -333,7 +344,7 @@ class Monad m where
   (>>=) :: m a -> (a -> m b) -> m b  -- called "bind"
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ```haskell
 data ExceptM a = Raise Exception
@@ -351,14 +362,14 @@ instance Monad ExceptM where
                Return a -> k a
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### What the Exception Monad *Means*
 
 1. We have the result from some computation that may have raised an error.
 1. We want to pass this result to a new function, which may itself raise an error.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Ordering and Side Effects
 
@@ -366,7 +377,7 @@ Wadler writes: "Perform computation `m` and bind `a` to the resulting value, and
 
 Ordering is important here: the side effects must happen in order.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### We Can Now Rework the Generic Evaluator
 
@@ -378,7 +389,7 @@ eval (Div t u) = eval t >>=
                         \b -> return (a `div` b)
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Recall the Definition of StateM
 
@@ -387,7 +398,7 @@ type StateM a = State -> (a, State)
 type State = Int
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ```haskell
 m >>= k :: StateM a -> (a -> StateM b) -> StateM b
@@ -400,7 +411,7 @@ k :: a -> (State -> (b, State))
 k :: a -> State -> (b, State)
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ```haskell
 (>>=) :: M a -> (a -> M b) -> M b
@@ -413,7 +424,7 @@ instance Monad State where
                              in  (b, finalState)
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### StateM `bind` Operation Summary
 
@@ -421,7 +432,7 @@ instance Monad State where
 1. Take the result *and* State from running the first function and pass both of those to `k`.
 1. Return the final *wrapped* value from running `k`.
 
-<!--s-->
+</script></section></section><section ><section data-markdown><script type="text/template">
 
 ## Section 3: Laws
 
@@ -433,7 +444,7 @@ All monad implementations must follow three laws:
 
 These laws keep us honest and prevent unexpected evaluation or strange things.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Left Identity
 
@@ -449,7 +460,7 @@ k :: a -> ExceptM b
 (>>=) :: ExceptM a -> (a -> ExceptM b) -> ExceptM b
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 Left identity for `ExceptM` says the following:
 
@@ -459,7 +470,7 @@ Left identity for `ExceptM` says the following:
 
 This is the same as starting with an unwrapped value and passing it to `k` directly.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Right Identity
 
@@ -474,7 +485,7 @@ ExceptM a >>= return
 (>>=) :: ExceptM a -> (a -> ExceptM a) -> ExceptM a
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 `bind` here computes the following:
 
@@ -483,7 +494,7 @@ ExceptM a >>= return
 1. Pass the `a` to `return`, and
 1. You end up what you started with: `Except a`.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Associativity
 
@@ -493,7 +504,7 @@ ExceptM a >>= return
 
 Specialized to our Exceptions Example
 
-<!--s-->
+</script></section></section><section ><section data-markdown><script type="text/template">
 
 ## Section 5: Parsers
 
@@ -507,7 +518,7 @@ item = Parser go
         go (a:xs) = [(a, xs)]
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Parsers Look Like StateM (from above)
 
@@ -518,7 +529,7 @@ instance Monad Parser where
                       [(b, z) | (a, y) <- parse m x, (b, z) <- parse (k a) y])
 ```
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Monadic Operators for Parsers: Sequencing
 
@@ -532,7 +543,7 @@ twoItems =
 
 Similar to ideas present in `StateM`, there's an idea of composition or "andThen" here.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Wadler Builds Up Pretty Complex Parser by Combining Trivial Functions
 
@@ -552,7 +563,7 @@ lit :: Char -> Parser Char
 lit c = item ▻ (\a -> a == c)
 ```
 
-<!--s-->
+</script></section></section><section ><section data-markdown><script type="text/template">
 
 ## Why Are Monads Interesting
 
@@ -560,15 +571,15 @@ lit c = item ▻ (\a -> a == c)
 - "Out of the Tar Pit": Accidental and Necessary Complexity. One source of complexity: side effects.
 - Thus, managing side effects is one strategy for managing bugs in software.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 > Whether a pure language (with monadic effects) is ultimately the best way to write programs is still an open question, but it certainly is a radical and elegant attack on the challenge of programming, and it was that combination of power and beauty that motivated the designers.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 > In retrospect, therefore, perhaps the biggest single benefit of laziness is not laziness per se, but rather that **laziness kept us pure**, and thereby motivated a great deal of productive work on monads and encapsulated state.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### What Can Other (non-FP) Languages Learn from Monads
 
@@ -576,7 +587,7 @@ lit c = item ▻ (\a -> a == c)
 - Difference of terminology ("Maybe Monad" vs "andThen", "futures" and "callbacks").
 - Mathematical terms link coding concepts to scholarship for the same ideas present in Mathematics.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Closing Points
 
@@ -586,7 +597,7 @@ lit c = item ▻ (\a -> a == c)
 - Edward Kmett (paraphrasing): "Monads are data structures with 2 operations and 3 laws. That's it."
 - Trying to build intuition for *all* monads is doomed to failure.
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Additional Readings
 
@@ -596,7 +607,7 @@ lit c = item ▻ (\a -> a == c)
 - Stephen Diehl, "What I Wish I Knew When Learning Haskell", http://dev.stephendiehl.com/hask/
 - "Typeclassopedia", https://wiki.haskell.org/Typeclassopedia
 
-<!--v-->
+</script></section><section data-markdown><script type="text/template">
 
 ### Thank You
 
@@ -604,4 +615,57 @@ Erik Aker
 
 Notes and code for this talk:
 
-https://github.com/erewok/talks/tree/master/monads_for_fp_talk_2017
+https://github.com/erewok/talks/tree/master/monads_for_fp_talk_2017</script></section></section></div>
+        </div>
+
+        <script src="./lib/js/head.min.js"></script>
+        <script src="./js/reveal.js"></script>
+
+        <script>
+            function extend() {
+              var target = {};
+              for (var i = 0; i < arguments.length; i++) {
+                var source = arguments[i];
+                for (var key in source) {
+                  if (source.hasOwnProperty(key)) {
+                    target[key] = source[key];
+                  }
+                }
+              }
+              return target;
+            }
+
+            // Optional libraries used to extend on reveal.js
+            var deps = [
+              { src: './lib/js/classList.js', condition: function() { return !document.body.classList; } },
+              { src: './plugin/markdown/marked.js', condition: function() { return !!document.querySelector('[data-markdown]'); } },
+              { src: './plugin/markdown/markdown.js', condition: function() { return !!document.querySelector('[data-markdown]'); } },
+              { src: './plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+              { src: './plugin/zoom-js/zoom.js', async: true },
+              { src: './plugin/notes/notes.js', async: true },
+              { src: './plugin/math/math.js', async: true }
+            ];
+
+            // default options to init reveal.js
+            var defaultOptions = {
+              controls: true,
+              progress: true,
+              history: true,
+              center: true,
+              transition: 'default', // none/fade/slide/convex/concave/zoom
+              dependencies: deps
+            };
+
+            // options from URL query string
+            var queryOptions = Reveal.getQueryHash() || {};
+
+            var options = {"transition":"fade"};
+            options = extend(defaultOptions, options, queryOptions);
+        </script>
+
+
+        <script>
+            Reveal.initialize(options);
+        </script>
+    </body>
+</html>
