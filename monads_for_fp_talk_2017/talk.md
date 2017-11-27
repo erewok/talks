@@ -29,11 +29,11 @@ from "A Brief, Incomplete, and Mostly Wrong History of Programming Languages"
 
 ### Our Approach in this Talk
 
-- A short history of Functional Programming
-- A bit of Lambda Calculus
-- Some Haskell
-- Close reading of Sections 1 through 3 of the paper
-- Light reading of Section 5
+1. A short history of Functional Programming
+1. A bit of Lambda Calculus
+1. Some Haskell
+1. Close reading of Sections 1 through 3 of the paper
+1. Light reading of Section 5
 
 <!--s-->
 
