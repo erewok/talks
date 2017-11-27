@@ -249,7 +249,7 @@ eval (Div t u) = eval t `div` eval u
 
 <!--v-->
 
-### Motivating Examples: Exceptions, State, Execution Trace
+### Motivating Examples
 
 ```haskell
 -- Exceptions
@@ -360,14 +360,6 @@ instance Monad ExceptM where
 
 <!--v-->
 
-### Ordering and Side Effects
-
-Wadler writes: "Perform computation `m` and bind `a` to the resulting value, and then perform computation `n`."
-
-Ordering is important here: the side effects must happen in order.
-
-<!--v-->
-
 ### We Can Now Rework the Generic Evaluator
 
 ```haskell
@@ -380,7 +372,13 @@ eval (Div t u) = eval t >>=
 
 <!--v-->
 
-### Recall the Definition of StateM
+### Ordering and Side Effects
+
+Wadler writes: "Perform computation `m` and bind `a` to the resulting value, and then perform computation `n`."
+
+Ordering is important here: the side effects must happen in order.
+
+<!--v-->
 
 ```haskell
 type StateM a = State -> (a, State)
@@ -594,7 +592,6 @@ lit c = item ▻ (\a -> a == c)
 - Philip Wadler, Simon Peyton Jones, "Imperative functional programming", 1992
 - Paul Hudak, Simon Peyton Jones, John Hughes, Philip Wadler: "A History of Haskell: Being Lazy With Class", 2007
 - Stephen Diehl, "What I Wish I Knew When Learning Haskell", http://dev.stephendiehl.com/hask/
-- "Typeclassopedia", https://wiki.haskell.org/Typeclassopedia
 
 <!--v-->
 
