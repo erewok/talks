@@ -6,24 +6,18 @@ theme: solarized
 revealOptions:
     transition: 'fade'
 ---
-
-## Monads for Functional Programming
+# Monads for Functional Programming
 
 Philip Wadler, 1992
 
 <!--v-->
 
-> A monad is just a monoid in the category of endofunctors, what's the problem?
+## Questions
 
-from "A Brief, Incomplete, and Mostly Wrong History of Programming Languages"
-
-<!--v-->
-
-### Some Questions
-
-- Why did Haskell have a side effect problem?
+- What problem is Wadler solving?
+- Why did Haskell have this problem in the first place?
 - How does the monad work?
-- Why is the solution interesting beyond the world of Haskell?
+- Why is this solution interesting beyond the world of Haskell?
 
 <!--v-->
 
@@ -142,43 +136,7 @@ def iszero = 𝝺n(n 𝝺first.𝝺second.first)
 
 <!--s-->
 
-### Haskell is Lambda Calculus
-
-```haskell
-Lambda Calculus ->
-
-  | Simply Typed Lambda Calculus (no polymorphic functions) ->
-
-    |  System F (polymorphism) ->
-
-      |  Haskell
-```
-
-Wadler: "Pure languages are lambda calculus pure and simple"
-
-<!--v-->
-
-### Consider the Identity Function
-
-```haskell
-ident :: a -> a
-ident ...
-```
-
-Here `a` is a type variable. This function is polymorphic so `a` can be anything in the Haskell universe.
-
-Roughly one valid (non-recursive) definition for this function:
-
-```haskell
-ident :: a -> a
-ident arg = arg
-```
-
-<!--v-->
-
-### Haskell's Laziness
-
-Primary Haskell Implementer's Goals:
+### Primary Goals for Haskell Implementers
 
 - Laziness
 - Functional Programming based on Typed Lambda Calculus (System F)
@@ -191,18 +149,6 @@ Primary Haskell Implementer's Goals:
 
 <!--v-->
 
-### Haskell's Purity
-
-Consider a function with this type signature:
-
-```haskell
-square :: Double -> Double
-```
-
-"A function can only read what is supplied to it in its arguments and the only way it can have an effect on the world is through the values it returns." (Dan Piponi, "You Could Have Invented Monads")
-
-<!--v-->
-
 ### Haskell's Side Effect Problem
 
 As a result of purity, Haskell could not compute side effects, such as:
@@ -211,6 +157,68 @@ As a result of purity, Haskell could not compute side effects, such as:
 - Take input from users
 - Read files
 - Write files
+
+<!--s-->
+
+## Quick Haskell Primer
+
+```haskell
+type MyId = Int
+
+data Tree a = Leaf
+            | Node (Tree a) a (Tree a)
+
+newtype MyId2 = MyId2 Int
+
+-- Records:
+data Contact = Contact { email :: String, phone :: String}
+
+λ> Contact "heyyou@hey.you.email" "619-555-2717"
+Contact {email = "heyyou@hey.you.email", phone = "619-555-2717"}
+```
+
+<!--v-->
+
+### Functions
+
+```haskell
+doubleSmallNumber :: Int -> Int
+doubleSmallNumber x = if x > 100 then x else x*2
+
+double y = let x = y * y in x * 2
+
+max' :: (Ord a) => a -> a -> a
+max' a b
+    | a > b     = a
+    | otherwise = b
+
+printSomeNums :: Int -> IO ()
+printSomeNums n = putStrLn allNums
+  where allNums = concat $ map show numbers
+        numbers = take n [1..]
+```
+
+<!--v-->
+
+## Typeclasses
+
+```haskell
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+
+data Maybe a = Just a | Nothing
+instace Functor Maybe where
+   fmap f (Just a) = Just (f a )
+   fmap f Nothing = Nothing
+
+genericFunctorFunc :: (Functor f, Show a) => f a -> f String
+genericFunctorFunc f = fmap show f
+
+λ> genericFunctorFunc $ Just 5
+Just "5"
+λ> genericFunctorFunc [5, 4, 3]
+["5","4","3"]
+```
 
 <!--s-->
 
@@ -380,6 +388,8 @@ Ordering is important here: the side effects must happen in order.
 
 <!--v-->
 
+## Let's Try to Implement State
+
 ```haskell
 type StateM a = State -> (a, State)
 type State = Int
@@ -388,21 +398,25 @@ type State = Int
 <!--v-->
 
 ```haskell
+m >>= k :: M a -> (a -> M b) -> M b
 m >>= k :: StateM a -> (a -> StateM b) -> StateM b
 
--- Let's try to subsitute...
 m = \startState -> (a, newState)
+
 k :: a -> (State -> (b, State))
 
 -- because of the associativity of function arrows, we can write:
 k :: a -> State -> (b, State)
 ```
 
+Notice: k is a function that takes two arguments.
+
+
 <!--v-->
 
 ```haskell
-(>>=) :: M a -> (a -> M b) -> M b
-(>>=) :: (s -> (a, s)) -> (a -> t -> (b, t)) -> (t -> (b, t))
+m = \startState -> (a, newState)
+k :: a -> State -> (b, State)
 
 instance Monad State where
     return x = \state -> (x, state)
@@ -555,6 +569,7 @@ lit c = item ▻ (\a -> a == c)
 ## Why Are Monads Interesting
 
 - Preservation of referential transparency: if `f` is a pure function, `f 3` will always return the same value.
+- Allow side effects without impurity (except for IO) and make you *really aware* of side effects.
 - "Out of the Tar Pit": Accidental and Necessary Complexity. One source of complexity: side effects.
 - Thus, managing side effects is one strategy for managing bugs in software.
 
@@ -565,6 +580,8 @@ lit c = item ▻ (\a -> a == c)
 <!--v-->
 
 > In retrospect, therefore, perhaps the biggest single benefit of laziness is not laziness per se, but rather that **laziness kept us pure**, and thereby motivated a great deal of productive work on monads and encapsulated state.
+
+Simon Peyton Jones in "History of Haskell"
 
 <!--v-->
 
