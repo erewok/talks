@@ -12,6 +12,12 @@ Philip Wadler, 1992
 
 <!--v-->
 
+Notes and code for this talk:
+
+https://github.com/erewok/talks/tree/master/monads_for_fp_talk_2017
+
+<!--v-->
+
 ## Questions
 
 - What problem is Wadler solving?
