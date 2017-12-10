@@ -14,7 +14,7 @@ Philip Wadler, 1992
 
 Notes and code for this talk:
 
-https://github.com/erewok/talks/tree/master/monads_for_fp_talk_2017
+github.com/erewok/talks/tree/master/monads_for_fp_talk_2017
 
 <!--v-->
 
@@ -31,7 +31,7 @@ https://github.com/erewok/talks/tree/master/monads_for_fp_talk_2017
 
 1. A short history of Functional Programming
 1. A bit of Lambda Calculus
-1. Some Haskell
+1. Some Notes on Haskell
 1. Close reading of Sections 1 through 3 of the paper
 1. Light reading of Section 5
 
@@ -121,110 +121,31 @@ def one = 𝝺s((s false) 𝝺x.x)
  -> 𝝺s((s 𝝺first.𝝺second.second) 𝝺x.x)
 ```
 
-<!--v-->
-
-## Using Numbers
-
-```haskell
--- an `iszero` test (`𝝺first.𝝺second.first` is the same as `true`)
-def iszero = 𝝺n(n 𝝺first.𝝺second.first)
-
--- iszero applied to zero
-𝝺x.x 𝝺first.𝝺second.first
- -> 𝝺first.𝝺second.first -- `true`
-
--- iszero applied to one
-𝝺s((s 𝝺first.𝝺second.second) 𝝺x.x) 𝝺first.𝝺second.first
- -> ((𝝺first.𝝺second.first 𝝺first.𝝺second.second) 𝝺x.x)
-   -> 𝝺second.(𝝺first.𝝺second.second) 𝝺x.x
-     -> 𝝺first.𝝺second.second -- `false`
-```
-
 <!--s-->
 
-### Primary Goals for Haskell Implementers
+### Primary Goals for Haskell Implementers:
 
-- Laziness
-- Functional Programming based on Typed Lambda Calculus (System F)
+- Functional Programming based on Typed Lambda Calculus.
+- Laziness.
 
 **Purity** is a side effect of laziness.
 
 <!--v-->
 
-> An immediate consequence of laziness is that evaluation order is demand-driven. As a result, it becomes more or less impossible to *reliably* perform input/output or other side effects as the result of a function call. For example, if a function `f` has type `Int -> Int` you can be sure that `f` will not read or write any mutable variables, nor will it perform any input/output. In short, `f` really is a function in the mathematical sense...
+> An immediate consequence of laziness is that evaluation order is demand-driven. As a result, it becomes more or less impossible to *reliably* perform input/output or other side effects as the result of a function call.
 
 <!--v-->
 
 ### Haskell's Side Effect Problem
 
-As a result of purity, Haskell could not compute side effects, such as:
+As a result of purity, initially Haskell could not compute side effects, such as:
 
 - Print to the screen
 - Take input from users
 - Read files
 - Write files
 
-<!--s-->
-
-## Quick Haskell Primer
-
-```haskell
-type MyId = Int
-
-data Tree a = Leaf
-            | Node (Tree a) a (Tree a)
-
-newtype MyId2 = MyId2 Int
-
--- Records:
-data Contact = Contact { email :: String, phone :: String}
-
-λ> Contact "heyyou@hey.you.email" "619-555-2717"
-Contact {email = "heyyou@hey.you.email", phone = "619-555-2717"}
-```
-
-<!--v-->
-
-### Functions
-
-```haskell
-doubleSmallNumber :: Int -> Int
-doubleSmallNumber x = if x > 100 then x else x*2
-
-double y = let x = y * y in x * 2
-
-max' :: (Ord a) => a -> a -> a
-max' a b
-    | a > b     = a
-    | otherwise = b
-
-printSomeNums :: Int -> IO ()
-printSomeNums n = putStrLn allNums
-  where allNums = concat $ map show numbers
-        numbers = take n [1..]
-```
-
-<!--v-->
-
-## Typeclasses
-
-```haskell
-class Functor f where
-  fmap :: (a -> b) -> f a -> f b
-
-data Maybe a = Just a | Nothing
-instace Functor Maybe where
-   fmap f (Just a) = Just (f a )
-   fmap f Nothing = Nothing
-
-genericFunctorFunc :: (Functor f, Show a) => f a -> f String
-genericFunctorFunc f = fmap show f
-
-λ> genericFunctorFunc $ Just 5
-Just "5"
-λ> genericFunctorFunc [5, 4, 3]
-["5","4","3"]
-```
+Monads became the primary solution for these problems.
 
 <!--s-->
 
@@ -238,15 +159,7 @@ Just "5"
 
 <!--v-->
 
-### Evaluator with three motivating examples
-
-- Add error handling
-- Count operations
-- Add execution trace (printing, debugging)
-
-<!--v-->
-
-### Simple Evaluator: First Attempt
+### Example Computation: Evaluator
 
 ```haskell
 data Term = Con Int
@@ -260,6 +173,14 @@ eval (Div t u) = eval t `div` eval u
 λ> eval (Div (Con 1) (Con 0))
 *** Exception: divide by zero
 ```
+
+<!--v-->
+
+### Evaluator with three motivating examples
+
+- Add error handling
+- Count operations
+- Add execution trace (printing, debugging)
 
 <!--v-->
 
@@ -302,7 +223,12 @@ eval (Div t u) = case eval t of
                             else Return (a / b)
 ```
 
-Notice: it still looks like lambda calculus. In other words: it's still "pure"!
+<!--v-->
+
+State and Execution Trace look similar.
+
+There's a pattern here...
+
 
 <!--v-->
 
@@ -334,6 +260,7 @@ Notice: it still looks like lambda calculus. In other words: it's still "pure"!
 
 ### What's a Monad
 
+- A data type
 - 2 operations
 - 3 laws
 
@@ -404,6 +331,24 @@ type State = Int
 <!--v-->
 
 ```haskell
+instance Monad State where
+    return :: a -> StateM
+    return x = \state -> (x, state)
+
+    (>>=) :: StateM a -> (a -> StateM b) -> StateM b
+    m >>= k = \startState -> let (a, newState) = m startState
+                                 (b, finalState) = k a newState
+                             in  (b, finalState)
+
+-- Another way to look at these...
+
+m = \startState -> (a, newState)
+k :: a -> (State -> (b, State))
+```
+
+<!--v-->
+
+```haskell
 m >>= k :: M a -> (a -> M b) -> M b
 m >>= k :: StateM a -> (a -> StateM b) -> StateM b
 
@@ -416,20 +361,6 @@ k :: a -> State -> (b, State)
 ```
 
 Notice: k is a function that takes two arguments.
-
-
-<!--v-->
-
-```haskell
-m = \startState -> (a, newState)
-k :: a -> State -> (b, State)
-
-instance Monad State where
-    return x = \state -> (x, state)
-    m >>= k = \startState -> let (a, newState) = m startState
-                                 (b, finalState) = k a newState
-                             in  (b, finalState)
-```
 
 <!--v-->
 
@@ -558,7 +489,6 @@ Similar to ideas present in `StateM`, there's an idea of composition or "andThen
 -- Filtering
 (▻) :: Parser a -> (a -> Bool) -> Parser a
 m ▻ p = m >>= \a -> if p a then return a else zero
-infixl 8 ▻
 
 letter :: Parser Char
 letter = item ▻ isLetter
@@ -574,10 +504,11 @@ lit c = item ▻ (\a -> a == c)
 
 ## Why Are Monads Interesting
 
-- Preservation of referential transparency: if `f` is a pure function, `f 3` will always return the same value.
-- Allow side effects without impurity (except for IO) and make you *really aware* of side effects.
-- "Out of the Tar Pit": Accidental and Necessary Complexity. One source of complexity: side effects.
-- Thus, managing side effects is one strategy for managing bugs in software.
+- Preservation of referential transparency.
+- Allow side effects without impurity (except for IO).
+- Force awareness/handling of side effects.
+
+(See "Out of the Tar Pit" for discussion of accidental and necessary complexity, and side effects.)
 
 <!--v-->
 
@@ -596,16 +527,6 @@ Simon Peyton Jones in "History of Haskell"
 - They're probably already using them.
 - Difference of terminology ("Maybe Monad" vs "andThen", "futures" and "callbacks").
 - Mathematical terms link coding concepts to scholarship for the same ideas present in Mathematics.
-
-<!--v-->
-
-### Closing Points
-
-- Monads are not impure.
-- Monads are not simply about side effects.
-- Monads are not simply a solution to the problem of IO.
-- Edward Kmett (paraphrasing): "Monads are data structures with 2 operations and 3 laws. That's it."
-- Trying to build intuition for *all* monads is doomed to failure.
 
 <!--v-->
 
