@@ -69,6 +69,10 @@ A: A language based on Lambda Calculus.
 
 </script></section></section><section ><section data-markdown><script type="text/template">
 
+> Pure languages, such as Miranda and Haskell, are lambda calculus pure and simple.
+
+</script></section><section data-markdown><script type="text/template">
+
 ## Lambda Calculus
 
 The identity function:
@@ -106,31 +110,33 @@ We can't reduce any more so this equation is in "normal form."
 
 </script></section><section data-markdown><script type="text/template">
 
-### Representing Bools
+### Application, Free and Bound Variables
 
 ```haskell
-def true = 𝝺first.𝝺second.first
-def false = 𝝺first.𝝺second.second
+def select_first = 𝝺first.𝝺second.first
+
+def apply = 𝝺func.𝝺arg.(func arg)
+
+def make_pair = 𝝺first.𝝺second.𝝺func((func first) second)
+
+𝝺bound.(free bound)
 ```
 
 </script></section><section data-markdown><script type="text/template">
 
-### Representing Numbers
-
-We need `0` and a `succ` function:
+Haskell as Lambda Calculus:
 
 ```haskell
-def zero = 𝝺x.x
-def succ = 𝝺n.𝝺s((s false) n)
+add :: Int -> (Int -> Int)
+add x y = x + y
 
--- one, for example: substitute `false` with its definition above
-def one = 𝝺s((s false) 𝝺x.x)
- -> 𝝺s((s 𝝺first.𝝺second.second) 𝝺x.x)
+-- this is equivalent to...
+add' = \x -> \y -> x + y
 ```
 
 </script></section></section><section ><section data-markdown><script type="text/template">
 
-### Primary Goals for Haskell Implementers:
+### Primary Goals for Haskell Implementers
 
 - Functional Programming based on Typed Lambda Calculus.
 - Laziness.
@@ -141,11 +147,11 @@ def one = 𝝺s((s false) 𝝺x.x)
 
 > An immediate consequence of laziness is that evaluation order is demand-driven. As a result, it becomes more or less impossible to *reliably* perform input/output or other side effects as the result of a function call.
 
+"History of Haskell: Being Lazy with Class"
+
 </script></section><section data-markdown><script type="text/template">
 
 ### Haskell's Side Effect Problem
-
-As a result of purity, initially Haskell could not compute side effects, such as:
 
 - Print to the screen
 - Take input from users
@@ -158,11 +164,8 @@ Monads became the primary solution for these problems.
 
 ### Monads Paper Section 1: Introduction
 
-- Origins in Category Theory
-- Inspired by Eugenio Moggi's work on monads
 - Monads "integrate impure effects into pure functional languages"
-
-(Category Theory also makes other appearances in Haskell: Functor, Applicative, Monad, Monoid, etc.)
+- Origins in Category Theory
 
 </script></section><section data-markdown><script type="text/template">
 
@@ -318,6 +321,27 @@ eval (Div t u) = eval t >>=
                         \b -> return (a `div` b)
 ```
 
+(almost)
+
+</script></section><section data-markdown><script type="text/template">
+
+### Evaluator that may `Raise e`
+
+```haskell
+data ExceptM a = Raise Exception | Return a
+type Exception = String
+
+-- `eval` alone won't properly handle "divide by zero"
+evalExceptM :: Term -> ExceptM Int
+evalExceptM (Con a) = return a
+evalExceptM (Div t u) =
+  evalExceptM t >>=
+  \a -> evalExceptM u >>=
+  \b -> if b == 0
+           then raise "divide by zero error"
+           else return (a `div` b)
+```
+
 </script></section><section data-markdown><script type="text/template">
 
 ### Ordering and Side Effects
@@ -339,7 +363,7 @@ type State = Int
 
 ```haskell
 instance Monad State where
-    return :: a -> StateM
+    return :: a -> StateM a
     return x = \state -> (x, state)
 
     (>>=) :: StateM a -> (a -> StateM b) -> StateM b
@@ -347,35 +371,17 @@ instance Monad State where
                                  (b, finalState) = k a newState
                              in  (b, finalState)
 
--- Another way to look at these...
-
-m = \startState -> (a, newState)
 k :: a -> (State -> (b, State))
+-- k takes an `a` and returns a function from `State -> (b, State)`
 ```
 
 </script></section><section data-markdown><script type="text/template">
 
-```haskell
-m >>= k :: M a -> (a -> M b) -> M b
-m >>= k :: StateM a -> (a -> StateM b) -> StateM b
+### What StateM *Means*
 
-m = \startState -> (a, newState)
-
-k :: a -> (State -> (b, State))
-
--- because of the associativity of function arrows, we can write:
-k :: a -> State -> (b, State)
-```
-
-Notice: k is a function that takes two arguments.
-
-</script></section><section data-markdown><script type="text/template">
-
-### StateM `bind` Operation Summary
-
-1. Run the first function in `m` with an argument to be provided.
-1. Take the result *and* State from running the first function and pass both of those to `k`.
-1. Return the final *wrapped* value from running `k`.
+1. Run the first *stateful computation* (`m`, with an argument to be provided).
+1. Take the result *and* State from running the first function and run another *stateful computation*.
+1. This is like *function composition*.
 
 </script></section></section><section ><section data-markdown><script type="text/template">
 
@@ -407,16 +413,6 @@ k :: a -> ExceptM b
 
 </script></section><section data-markdown><script type="text/template">
 
-Left identity for `ExceptM` says the following:
-
-1. Wrap up a value in the monad, `ExceptM a`, then
-1. Pass the wrapped value to `bind`, which will unwrap it, and then
-1. Pass the unwrapped `a` to `k`, which will then return a new wrapped value
-
-This is the same as starting with an unwrapped value and passing it to `k` directly.
-
-</script></section><section data-markdown><script type="text/template">
-
 ### Right Identity
 
 ```haskell
@@ -429,15 +425,6 @@ Specialized to our Exceptions Example:
 ExceptM a >>= return
 (>>=) :: ExceptM a -> (a -> ExceptM a) -> ExceptM a
 ```
-
-</script></section><section data-markdown><script type="text/template">
-
-`bind` here computes the following:
-
-1. Take an `Except a`
-1. Unwrap the `Except` from the `a`
-1. Pass the `a` to `return`, and
-1. You end up what you started with: `Except a`.
 
 </script></section><section data-markdown><script type="text/template">
 
@@ -525,12 +512,13 @@ lit c = item ▻ (\a -> a == c)
 
 > In retrospect, therefore, perhaps the biggest single benefit of laziness is not laziness per se, but rather that **laziness kept us pure**, and thereby motivated a great deal of productive work on monads and encapsulated state.
 
-Simon Peyton Jones in "History of Haskell"
+"History of Haskell: Being Lazy with Class"
 
 </script></section><section data-markdown><script type="text/template">
 
 ### What Can Other (non-FP) Languages Learn from Monads
 
+- Isolation and awareness of side effects.
 - They're probably already using them.
 - Difference of terminology ("Maybe Monad" vs "andThen", "futures" and "callbacks").
 - Mathematical terms link coding concepts to scholarship for the same ideas present in Mathematics.
