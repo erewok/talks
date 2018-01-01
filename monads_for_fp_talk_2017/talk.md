@@ -30,9 +30,8 @@ github.com/erewok
 
 ### Our Approach in this Talk
 
-1. A short history of Functional Programming
+1. Short history of functional programming and Haskell
 1. A bit of Lambda Calculus
-1. Some Notes on Haskell
 1. Close reading of Sections 1 through 3 of the paper
 1. Light reading of Section 5
 
@@ -53,85 +52,7 @@ A: A language based on Lambda Calculus.
 - Mid-80s: Lots of Pure, Lazy FP languages; Simon Peyton Jones calls this period "a tower of Babel".
 - 1987: First Haskell meeting.
 
-<!--s-->
-
-> Pure languages, such as Miranda and Haskell, are lambda calculus pure and simple.
-
 <!--v-->
-
-## Lambda Calculus
-
-
-```haskell
-𝝺x.x
-```
-
-The identity function
-
-<!--v-->
-
-> ...the value of an expression depends only on its free variables.
-
-```haskell
-𝝺bound.(free bound)
-```
-
-<!--v-->
-
-## Other Combinators
-
-```haskell
-𝝺s.(s s)
-```
-
-The "self-application function"
-
-<!--v-->
-
-## More Combinators (With Names)
-
-```haskell
-def select_first = 𝝺first.𝝺second.first
-
-def apply = 𝝺func.𝝺arg.(func arg)
-
-def make_pair = 𝝺first.𝝺second.𝝺func((func first) second)
-```
-
-<!--v-->
-
-### Beta Reduction
-
-```haskell
- 𝝺x.x 𝝺s.(s s)
-  -> 𝝺s.(s s)
-```
-
-We can't reduce any more so this equation is said to be in "normal form."
-
-<!--v-->
-
-### Another Beta Reduction
-
-```haskell
-𝝺s.(s s) 𝝺x.x
-  -> (𝝺x.x 𝝺x.x)
-    -> 𝝺x.x
-```
-
-<!--v-->
-
-Haskell as Lambda Calculus:
-
-```haskell
-add :: Int -> (Int -> Int)
-add x y = x + y
-
--- this is equivalent to...
-add' = \x -> \y -> x + y
-```
-
-<!--s-->
 
 ### Primary Goals for Haskell Implementers
 
@@ -159,6 +80,87 @@ add' = \x -> \y -> x + y
 Monads became the primary solution for these problems.
 
 <!--s-->
+
+> Pure languages, such as Miranda and Haskell, are lambda calculus pure and simple.
+
+<!--v-->
+
+## Lambda Calculus
+
+
+```haskell
+𝝺x.x
+```
+
+The identity function
+
+<!--v-->
+
+## Self Application Function
+
+```haskell
+𝝺s.(s s)
+```
+
+<!--v-->
+
+### Beta Reduction
+
+```haskell
+ 𝝺x.x 𝝺s.(s s)
+  -> 𝝺s.(s s)
+```
+
+We can't reduce any more so this equation is said to be in "normal form."
+
+<!--v-->
+
+### Another Beta Reduction
+
+```haskell
+𝝺s.(s s) 𝝺x.x
+  -> (𝝺x.x 𝝺x.x)
+    -> 𝝺x.x
+```
+
+
+<!--v-->
+
+## More Combinators (With Names)
+
+```haskell
+def select_first = 𝝺first.𝝺second.first
+
+def apply = 𝝺func.𝝺arg.(func arg)
+
+def make_pair = 𝝺first.𝝺second.𝝺func((func first) second)
+```
+
+<!--v-->
+
+> ...the value of an expression depends only on its free variables.
+
+```haskell
+𝝺bound.(free bound)
+```
+
+
+<!--v-->
+
+
+
+Haskell as Lambda Calculus:
+
+```haskell
+add :: Int -> (Int -> Int)
+add x y = x + y
+
+-- this is equivalent to...
+add' = \x -> \y -> x + y
+```
+
+<!--s-->
+
 
 ### Monads Paper Section 1: Introduction
 
@@ -343,9 +345,7 @@ evalExceptM (Div t u) =
 
 ### Ordering and Side Effects
 
-Wadler writes: "Perform computation `m` and bind `a` to the resulting value, and then perform computation `n`."
-
-Ordering is important here: the side effects must happen in order.
+> Perform computation `m` and bind `a` to the resulting value, and then perform computation `n`.
 
 <!--v-->
 

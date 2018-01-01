@@ -60,85 +60,7 @@ A: A language based on Lambda Calculus.
 - Mid-80s: Lots of Pure, Lazy FP languages; Simon Peyton Jones calls this period "a tower of Babel".
 - 1987: First Haskell meeting.
 
-</script></section></section><section ><section data-markdown><script type="text/template">
-
-> Pure languages, such as Miranda and Haskell, are lambda calculus pure and simple.
-
 </script></section><section data-markdown><script type="text/template">
-
-## Lambda Calculus
-
-
-```haskell
-𝝺x.x
-```
-
-The identity function
-
-</script></section><section data-markdown><script type="text/template">
-
-> ...the value of an expression depends only on its free variables.
-
-```haskell
-𝝺bound.(free bound)
-```
-
-</script></section><section data-markdown><script type="text/template">
-
-## Other Combinators
-
-```haskell
-𝝺s.(s s)
-```
-
-The "self-application function"
-
-</script></section><section data-markdown><script type="text/template">
-
-## More Combinators (With Names)
-
-```haskell
-def select_first = 𝝺first.𝝺second.first
-
-def apply = 𝝺func.𝝺arg.(func arg)
-
-def make_pair = 𝝺first.𝝺second.𝝺func((func first) second)
-```
-
-</script></section><section data-markdown><script type="text/template">
-
-### Beta Reduction
-
-```haskell
- 𝝺x.x 𝝺s.(s s)
-  -> 𝝺s.(s s)
-```
-
-We can't reduce any more so this equation is said to be in "normal form."
-
-</script></section><section data-markdown><script type="text/template">
-
-### Another Beta Reduction
-
-```haskell
-𝝺s.(s s) 𝝺x.x
-  -> (𝝺x.x 𝝺x.x)
-    -> 𝝺x.x
-```
-
-</script></section><section data-markdown><script type="text/template">
-
-Haskell as Lambda Calculus:
-
-```haskell
-add :: Int -> (Int -> Int)
-add x y = x + y
-
--- this is equivalent to...
-add' = \x -> \y -> x + y
-```
-
-</script></section></section><section ><section data-markdown><script type="text/template">
 
 ### Primary Goals for Haskell Implementers
 
@@ -166,6 +88,87 @@ add' = \x -> \y -> x + y
 Monads became the primary solution for these problems.
 
 </script></section></section><section ><section data-markdown><script type="text/template">
+
+> Pure languages, such as Miranda and Haskell, are lambda calculus pure and simple.
+
+</script></section><section data-markdown><script type="text/template">
+
+## Lambda Calculus
+
+
+```haskell
+𝝺x.x
+```
+
+The identity function
+
+</script></section><section data-markdown><script type="text/template">
+
+## Self Application Function
+
+```haskell
+𝝺s.(s s)
+```
+
+</script></section><section data-markdown><script type="text/template">
+
+### Beta Reduction
+
+```haskell
+ 𝝺x.x 𝝺s.(s s)
+  -> 𝝺s.(s s)
+```
+
+We can't reduce any more so this equation is said to be in "normal form."
+
+</script></section><section data-markdown><script type="text/template">
+
+### Another Beta Reduction
+
+```haskell
+𝝺s.(s s) 𝝺x.x
+  -> (𝝺x.x 𝝺x.x)
+    -> 𝝺x.x
+```
+
+
+</script></section><section data-markdown><script type="text/template">
+
+## More Combinators (With Names)
+
+```haskell
+def select_first = 𝝺first.𝝺second.first
+
+def apply = 𝝺func.𝝺arg.(func arg)
+
+def make_pair = 𝝺first.𝝺second.𝝺func((func first) second)
+```
+
+</script></section><section data-markdown><script type="text/template">
+
+> ...the value of an expression depends only on its free variables.
+
+```haskell
+𝝺bound.(free bound)
+```
+
+
+</script></section><section data-markdown><script type="text/template">
+
+
+
+Haskell as Lambda Calculus:
+
+```haskell
+add :: Int -> (Int -> Int)
+add x y = x + y
+
+-- this is equivalent to...
+add' = \x -> \y -> x + y
+```
+
+</script></section></section><section ><section data-markdown><script type="text/template">
+
 
 ### Monads Paper Section 1: Introduction
 
