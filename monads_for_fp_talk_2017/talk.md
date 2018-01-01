@@ -14,7 +14,8 @@ Philip Wadler, 1992
 
 Notes and code for this talk:
 
-github.com/erewok/talks/tree/master/monads_for_fp_talk_2017
+github.com/erewok
+-> talks/tree/master/monads_for_fp_talk_2017
 
 <!--v-->
 
@@ -52,14 +53,6 @@ A: A language based on Lambda Calculus.
 - Mid-80s: Lots of Pure, Lazy FP languages; Simon Peyton Jones calls this period "a tower of Babel".
 - 1987: First Haskell meeting.
 
-<!--v-->
-
-### Broader Context; the 80s
-
-- End of Moore's Law in sight (parallel computing will become more important).
-- Desire for a *research* programming language for PL researchers to use.
-- Desire for languages with rigorous mathematical and theoretical foundations.
-
 <!--s-->
 
 > Pure languages, such as Miranda and Haskell, are lambda calculus pure and simple.
@@ -68,42 +61,34 @@ A: A language based on Lambda Calculus.
 
 ## Lambda Calculus
 
-The identity function:
 
 ```haskell
 𝝺x.x
 ```
 
-The "self-application function":
+The identity function
+
+<!--v-->
+
+> ...the value of an expression depends only on its free variables.
+
+```haskell
+𝝺bound.(free bound)
+```
+
+<!--v-->
+
+## Other Combinators
 
 ```haskell
 𝝺s.(s s)
 ```
 
-<!--v-->
-
-### Beta Reduction 1
-
-```haskell
- 𝝺x.x 𝝺s.(s s)
-  -> 𝝺s.(s s)
-```
-
-We can't reduce any more so this equation is in "normal form."
+The "self-application function"
 
 <!--v-->
 
-### Beta Reduction 2
-
-```haskell
-𝝺s.(s s) 𝝺x.x
-  -> (𝝺x.x 𝝺x.x)
-    -> 𝝺x.x
-```
-
-<!--v-->
-
-### Application, Free and Bound Variables
+## More Combinators (With Names)
 
 ```haskell
 def select_first = 𝝺first.𝝺second.first
@@ -111,8 +96,27 @@ def select_first = 𝝺first.𝝺second.first
 def apply = 𝝺func.𝝺arg.(func arg)
 
 def make_pair = 𝝺first.𝝺second.𝝺func((func first) second)
+```
 
-𝝺bound.(free bound)
+<!--v-->
+
+### Beta Reduction
+
+```haskell
+ 𝝺x.x 𝝺s.(s s)
+  -> 𝝺s.(s s)
+```
+
+We can't reduce any more so this equation is said to be in "normal form."
+
+<!--v-->
+
+### Another Beta Reduction
+
+```haskell
+𝝺s.(s s) 𝝺x.x
+  -> (𝝺x.x 𝝺x.x)
+    -> 𝝺x.x
 ```
 
 <!--v-->
@@ -131,7 +135,8 @@ add' = \x -> \y -> x + y
 
 ### Primary Goals for Haskell Implementers
 
-- Functional Programming based on Typed Lambda Calculus.
+- Desire for a *research* programming language for PL researchers to use.
+- Based on Typed Lambda Calculus.
 - Laziness.
 
 **Purity** is a side effect of laziness.
@@ -231,7 +236,6 @@ eval (Div t u) = case eval t of
 State and Execution Trace look similar.
 
 There's a pattern here...
-
 
 <!--v-->
 
@@ -355,7 +359,7 @@ type State = Int
 <!--v-->
 
 ```haskell
-instance Monad State where
+instance Monad StateM where
     return :: a -> StateM a
     return x = \state -> (x, state)
 
@@ -375,6 +379,24 @@ k :: a -> (State -> (b, State))
 1. Run the first *stateful computation* (`m`, with an argument to be provided).
 1. Take the result *and* State from running the first function and run another *stateful computation*.
 1. This is like *function composition*.
+
+<!--v-->
+
+## The StateM Evaluator
+
+```haskell
+-- helper function for ticking along the state
+tick :: StateM ()
+tick = StateM (\x -> ((), x+1))
+
+evalState' :: Term -> StateM Int
+evalState' (Con a) = return a
+evalState' (Div t u) =
+  evalState' t >>=
+  \a -> evalState' u >>=
+  \b -> tick >>=
+  \_ -> return (a `div` b)
+```
 
 <!--s-->
 
@@ -396,27 +418,12 @@ These laws keep us honest and prevent unexpected evaluation or strange things.
 return a >>= k = k a
 ```
 
-Specialized to our Exceptions Example:
-
-```haskell
-return a :: a -> ExceptM a
-k :: a -> ExceptM b
-(>>=) :: ExceptM a -> (a -> ExceptM b) -> ExceptM b
-```
-
 <!--v-->
 
 ### Right Identity
 
 ```haskell
 m >>= return = m
-```
-
-Specialized to our Exceptions Example:
-
-```haskell
-ExceptM a >>= return
-(>>=) :: ExceptM a -> (a -> ExceptM a) -> ExceptM a
 ```
 
 <!--v-->
@@ -426,8 +433,6 @@ ExceptM a >>= return
 ```haskell
 (m >>= f) >>= g = m >>= (\x -> f x >>= g)
 ```
-
-Specialized to our Exceptions Example
 
 <!--s-->
 
@@ -445,13 +450,14 @@ item = Parser go
 
 <!--v-->
 
-### Parsers Look Like StateM (from above)
+### Parsers Look Somewhat Like State Monad
 
 ```haskell
 instance Monad Parser where
   return a = Parser (\x -> [(a, x)])
-  m >>= k = Parser (\x ->
-                      [(b, z) | (a, y) <- parse m x, (b, z) <- parse (k a) y])
+  m >>= k =
+    Parser (\x ->
+           [(b, z) | (a, y) <- parse m x, (b, z) <- parse (k a) y])
 ```
 
 <!--v-->
@@ -491,9 +497,9 @@ lit c = item ▻ (\a -> a == c)
 
 ## Why Are Monads Interesting
 
-- Preservation of referential transparency.
 - Allow side effects without impurity (except for IO).
 - Force awareness/handling of side effects.
+- Preservation of referential transparency.
 
 (See "Out of the Tar Pit" for discussion of accidental and necessary complexity, and side effects.)
 
