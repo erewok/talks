@@ -519,7 +519,7 @@ lit c = item ▻ (\a -> a == c)
 
 - Isolation and awareness of side effects.
 - They're probably already using them.
-- Difference of terminology ("Maybe Monad" vs "andThen", "futures" and "callbacks").
+- Difference of terminology: "Maybe Monad", "andThen", "futures" and "callbacks"
 - Mathematical terms link coding concepts to scholarship for the same ideas present in Mathematics.
 
 <!--v-->
@@ -549,4 +549,4 @@ Erik Aker
 
 Notes and code for this talk:
 
-https://github.com/erewok/talks/tree/master/monads_for_fp_talk_2017
+github -> erewok -> talks -> monads_for_fp_talk_2017
