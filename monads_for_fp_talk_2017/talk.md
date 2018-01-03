@@ -450,8 +450,6 @@ item = Parser go
 
 <!--v-->
 
-### Parsers Look Somewhat Like State Monad
-
 ```haskell
 instance Monad Parser where
   return a = Parser (\x -> [(a, x)])
@@ -459,6 +457,8 @@ instance Monad Parser where
     Parser (\x ->
            [(b, z) | (a, y) <- parse m x, (b, z) <- parse (k a) y])
 ```
+
+> Thus, unit corresponds to the empty parser, which consumes no input, and [bind] corresponds to the sequencing of two parsers.
 
 <!--v-->
 
@@ -472,7 +472,17 @@ twoItems =
   \b -> return (a, b)
 ```
 
-Similar to ideas present in `StateM`, there's an idea of composition or "andThen" here.
+<!--v-->
+
+## Alternation
+
+```haskell
+zero :: Parser a
+zero = Parser (\_ -> [])
+
+(⊕) :: Parser a -> Parser a -> Parser a
+m ⊕ n = Parser (\x -> parse m x ++ parse n x)
+```
 
 <!--v-->
 
@@ -505,6 +515,15 @@ lit c = item ▻ (\a -> a == c)
 
 <!--v-->
 
+### What Can Other (non-FP) Languages Learn from Monads
+
+- Isolation and awareness of side effects.
+- They're probably already using them.
+- Difference of terminology ("Maybe Monad" vs "andThen", "futures" and "callbacks").
+- Mathematical terms link coding concepts to scholarship for the same ideas present in Mathematics.
+
+<!--v-->
+
 > Whether a pure language (with monadic effects) is ultimately the best way to write programs is still an open question, but it certainly is a radical and elegant attack on the challenge of programming, and it was that combination of power and beauty that motivated the designers.
 
 <!--v-->
@@ -512,15 +531,6 @@ lit c = item ▻ (\a -> a == c)
 > In retrospect, therefore, perhaps the biggest single benefit of laziness is not laziness per se, but rather that **laziness kept us pure**, and thereby motivated a great deal of productive work on monads and encapsulated state.
 
 "History of Haskell: Being Lazy with Class"
-
-<!--v-->
-
-### What Can Other (non-FP) Languages Learn from Monads
-
-- Isolation and awareness of side effects.
-- They're probably already using them.
-- Difference of terminology ("Maybe Monad" vs "andThen", "futures" and "callbacks").
-- Mathematical terms link coding concepts to scholarship for the same ideas present in Mathematics.
 
 <!--v-->
 

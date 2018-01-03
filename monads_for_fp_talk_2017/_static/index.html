@@ -37,9 +37,8 @@ github.com/erewok
 
 ### Our Approach in this Talk
 
-1. A short history of Functional Programming
+1. Short history of functional programming and Haskell
 1. A bit of Lambda Calculus
-1. Some Notes on Haskell
 1. Close reading of Sections 1 through 3 of the paper
 1. Light reading of Section 5
 
@@ -353,9 +352,7 @@ evalExceptM (Div t u) =
 
 ### Ordering and Side Effects
 
-Wadler writes: "Perform computation `m` and bind `a` to the resulting value, and then perform computation `n`."
-
-Ordering is important here: the side effects must happen in order.
+> Perform computation `m` and bind `a` to the resulting value, and then perform computation `n`.
 
 </script></section><section data-markdown><script type="text/template">
 
@@ -460,8 +457,6 @@ item = Parser go
 
 </script></section><section data-markdown><script type="text/template">
 
-### Parsers Look Somewhat Like State Monad
-
 ```haskell
 instance Monad Parser where
   return a = Parser (\x -> [(a, x)])
@@ -469,6 +464,8 @@ instance Monad Parser where
     Parser (\x ->
            [(b, z) | (a, y) <- parse m x, (b, z) <- parse (k a) y])
 ```
+
+> Thus, unit corresponds to the empty parser, which consumes no input, and [bind] corresponds to the sequencing of two parsers.
 
 </script></section><section data-markdown><script type="text/template">
 
@@ -482,7 +479,17 @@ twoItems =
   \b -> return (a, b)
 ```
 
-Similar to ideas present in `StateM`, there's an idea of composition or "andThen" here.
+</script></section><section data-markdown><script type="text/template">
+
+## Alternation
+
+```haskell
+zero :: Parser a
+zero = Parser (\_ -> [])
+
+(⊕) :: Parser a -> Parser a -> Parser a
+m ⊕ n = Parser (\x -> parse m x ++ parse n x)
+```
 
 </script></section><section data-markdown><script type="text/template">
 
@@ -515,6 +522,15 @@ lit c = item ▻ (\a -> a == c)
 
 </script></section><section data-markdown><script type="text/template">
 
+### What Can Other (non-FP) Languages Learn from Monads
+
+- Isolation and awareness of side effects.
+- They're probably already using them.
+- Difference of terminology ("Maybe Monad" vs "andThen", "futures" and "callbacks").
+- Mathematical terms link coding concepts to scholarship for the same ideas present in Mathematics.
+
+</script></section><section data-markdown><script type="text/template">
+
 > Whether a pure language (with monadic effects) is ultimately the best way to write programs is still an open question, but it certainly is a radical and elegant attack on the challenge of programming, and it was that combination of power and beauty that motivated the designers.
 
 </script></section><section data-markdown><script type="text/template">
@@ -522,15 +538,6 @@ lit c = item ▻ (\a -> a == c)
 > In retrospect, therefore, perhaps the biggest single benefit of laziness is not laziness per se, but rather that **laziness kept us pure**, and thereby motivated a great deal of productive work on monads and encapsulated state.
 
 "History of Haskell: Being Lazy with Class"
-
-</script></section><section data-markdown><script type="text/template">
-
-### What Can Other (non-FP) Languages Learn from Monads
-
-- Isolation and awareness of side effects.
-- They're probably already using them.
-- Difference of terminology ("Maybe Monad" vs "andThen", "futures" and "callbacks").
-- Mathematical terms link coding concepts to scholarship for the same ideas present in Mathematics.
 
 </script></section><section data-markdown><script type="text/template">
 
