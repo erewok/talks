@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+## Describing the Elephant:
+#### Using Servant to Serve, Request, Test, and Document APIs (and more!)
+
+Erik Aker
+
+@erewok
+
+----
+
+code for this talk available here:
+
+github.com/erewok/talks
+
+---
+
+## Servant: A library (or DSL) for *Describing* APIs
+
+Library: [github.com/haskell-servant/servant](https://github.com/haskell-servant/servant)
+
+Paper: http://alpmestan.com/servant/servant-wgp.pdf
+
+---
+
+## Extremely Unsatisfactory Haskell Primer
+### (a detour)
+
+```haskell
+someInt :: Int
+someInt = 5
+
+type MyInt = Int
+
+-- This function works with type `MyInt` *and* `Int`
+someFunc :: Int -> Bool
+someFunc n = n > someInt
+
+fibs :: Integer -> Integer
+fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
+
+quicksort :: [a] -> [a]
+quicksort [] = []
+quicksort (p:xs) = (quicksort lesser) ++ [p] ++ (quicksort greater)
+    where
+        lesser = filter (< p) xs
+        greater = filter (>= p) xs
+```
+
+---
+
+## Working with Servant: Core Ideas
+
+1. "Describe" an API as a type, and 
+1. Build interpretations
+
+
+Interpretations can include:
+
+- Running a server
+- Generating clients (in potentially any programming language)
+- Documentation
+- Testing (for instance, testing that two APIs are equivalent)
+
+---
+
+## What does "describing web APIs as a type" look like?
+
+```haskell
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE TypeOperators              #-}
+
+module Lib where
+
+import Servant
+
+type CounterHome = "counter-html" :> Get '[HTML] Html
+```
+
+---
+
+## We can also combine APIs
+
+```haskell
+-- A sample thing to accept and/or return
+newtype Counter = Counter { value :: Int }
+  deriving (Generic, Show, Num, ToJSON, FromJSON)
+
+type CounterHome = "counter-html" :> Get '[HTML] Html
+
+--| Example "mult": curl -XPost http://someurl/counter-multiplier/4
+
+type CounterApi = "counter-post" :> Post '[JSON] Counter 
+    :<|> "counter-multiplier" 
+         :> Capture "mult" Int
+         :> Post '[JSON] Counter
+    :<|> "counter-reset-post"
+         :> ReqBody '[JSON] Counter
+         :> Post '[JSON] Counter
+
+type SampleApi = CounterHome :<|> CounterApi
+
+```
+
+---
+
+## Q: How can we get a value of our API type?
+
+A: Proxy, a stand-in *value* for a type
+
+```haskell
+type CounterApi = "counter-post" :> Post '[JSON] Counter
+  :<|> "counter-multiplier"
+    :> Capture "mult" Int :> Post '[JSON] Counter
+  :<|> "counter-reset-post"
+    :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
+  :<|> "counter-queryparam"
+    :> QueryParam "sortby" T.Text
+    :> Header "Some-Header" T.Text
+    :> Get '[JSON] Counter
+
+-- Here's the *value* representation of our CounterApi type
+counterApi :: Proxy CounterApi
+counterApi = Proxy
+```
+
+Next step: *interpreting* our API
+
+---
+
+## Interpretation I: Serving Servant
+
+```haskell
+-- Our Server
+server :: TVar Counter -> Server CounterApi
+server counter = counterHome counter
+  :<|> currentValue counter
+  :<|> counterMult counter
+  :<|> counterReset counter
+  :<|> counterWithParam counter
+
+main :: IO ()
+main = do
+  cntr <- newTVarIO 0  -- Create counter; start at 0
+  Warp.run 8000 (serve counterApi $ server cntr)
+```
+
+Requires the dependencies `servant-server`, `wai`, and `warp`.
+
+---
+
+## Server Handler example: HTML
+
+```haskell
+-- Our Server
+type CounterHome = "counter-html" :> Get '[HTML] Html
+
+server :: TVar Counter -> Server SampleApi
+server counter = counterHome counter
+  ...
+
+-- Simple HTML Endpoint: We can return Servant's `Handler a` type
+counterHome :: TVar Counter -> Handler H.Html
+counterHome counter = do
+  current <- liftIO . atomically $ readTVar counter
+  pure $ H.docTypeHtml $ H.body $ H.p $ (H.string . show . value) current
+```
+
+---
+
+## Server Handler example: JSON POST
+
+```haskell
+type CounterApi = "counter-post" :> Post '[JSON] Counter
+    :<|> "counter-reset-post"
+        :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
+    ...
+
+-- Our Server
+server :: TVar Counter -> Server SampleApi
+server counter = ...
+  :<|> counterReset counter
+  ...
+
+counterReset :: MonadIO m => TVar Counter -> Counter -> m Counter
+counterReset oldCounter newCounter = liftIO . atomically $ do
+  writeTVar oldCounter newCounter
+  pure newCounter
+
+```
+
+---
+
+## Some Difficulties
+
+---
+
+## Tough for Beginners:
+
+- Lots of GHC Extensions
+- Lots of typeclass and type family stuff
+- Lots of Monad Transformers in typical servant-server code.
+
+---
+
+
+## Gnarly Error Messages
+
+```
+    • Couldn't match type ‘(Counter -> m0 Counter)
+                           :<|> (Maybe T.Text -> Maybe T.Text -> m1 Counter)’
+                     with ‘Maybe T.Text
+                           -> Maybe T.Text
+                           -> transformers-0.5.2.0:Control.Monad.Trans.Except.ExceptT
+                                ServantErr IO Counter’
+      Expected type: Server SampleApi
+        Actual type: transformers-0.5.2.0:Control.Monad.Trans.Except.ExceptT
+                       ServantErr IO H.Html
+                     :<|> (transformers-0.5.2.0:Control.Monad.Trans.Except.ExceptT
+                             ServantErr IO Counter
+                           :<|> ((Int
+                                  -> transformers-0.5.2.0:Control.Monad.Trans.Except.ExceptT
+                                       ServantErr IO Counter)
+                                 :<|> ((Int
+                                        -> transformers-0.5.2.0:Control.Monad.Trans.Except.ExceptT
+                                             ServantErr IO Counter)
+                                       :<|> ((Counter -> m0 Counter)
+                                             :<|> (Maybe T.Text -> Maybe T.Text -> m1 Counter)))))
+    • In the expression:
+        counterHome counter
+        :<|>
+          currentValue counter
+          :<|>
+            counterPlusOne counter
+            :<|>
+              counterMult counter
+              :<|> counterReset counter :<|> counterWithParam counter
+
+```
+
+---
+
+## Some Common "Web Framework" Stuff is harder
+
+- Authentication & sessions can be tough
+- Returning Errors as JSON*
+
+---
+
+## Interpretation II: Generating Client code (Haskell, Javascript, Python...)
+
+---
+
+## Client Example
+
+```haskell
+module Main where
+
+import Network.HTTP.Client (newManager, defaultManagerSettings)
+import Servant.Client
+
+import Lib
+
+-- Haskell client generation
+postCounter
+  :<|> multiplier
+  :<|> reset
+  :<|> paramCounter = client counterApi
+```
+
+The `client` function creates a bunch of client functions for each endpoint in our API.
+
+---
+
+```haskell
+queries :: ClientM (Counter, Counter, Counter)
+queries = do
+  initial <- reset $ Counter 10
+  multCount <- multiplier 5
+  post <- postCounter
+  reset2 <- reset $ Counter 20
+  multCount2 <- multiplier 5
+  return (initial, multCount, post, reset2, multCount2)
+
+run :: IO ()
+run = do
+  manager <- newManager defaultManagerSettings
+  res <- runClientM queries (ClientEnv manager (BaseUrl Http "localhost" 8000 ""))
+  case res of
+    Left err -> putStrLn $ "Error: " ++ show err
+    Right (initial, multCount, post, reset2, multCount2) -> do
+      print initial
+      print multCount
+      print post
+      print reset2
+      print multCount2
+```
+
+---
+
+## In action...
+
+```
+❯ stack exec servant-sample-client
+Counter {value = 10}
+Counter {value = 50}
+Counter {value = 50}
+Counter {value = 20}
+Counter {value = 100}
+```
+
+---
+
+## We can also use servant-foreign to write client generators for any language
+
+```haskell
+instance HasForeignType Python B.ByteString Counter where
+  typeFor _ _ _ = "{\"value\": int}"
+
+main :: IO ()
+main = do
+  -- test out the Haskell clients
+  run
+  -- Write out a Python module with client code
+  writePythonForAPI counterApi requests ("examples" </> "api.py")
+```
+
+
+
+## Other Interpretations
+
+- Documentation: Generate Swagger, Markdown, etc.
+- Clients in Javascript (Angular, jQuery, React, etc.) and other languages.
+- Servant Quickcheck: quickcheck that two APIs are equal or no 500s!
+- Generating Servant API types *from* Swagger Definitions: OpenAPI, Swagger CodeGen, 
+- Whatever else people dream up.
+
+---
+
+## Thanks for listening!
+
+Erik Aker
+
+@erewok
+
+github.com/erewok
+
+</textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
