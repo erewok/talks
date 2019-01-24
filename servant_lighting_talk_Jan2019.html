@@ -268,10 +268,6 @@ counterReset oldCounter newCounter = liftIO . atomically $ do
 
 ## Interpretation II: Generating Client code (Haskell, Javascript, Python...)
 
----
-
-## Client Example
-
 ```haskell
 module Main where
 
@@ -287,9 +283,11 @@ postCounter
   :<|> paramCounter = client counterApi
 ```
 
-The `client` function creates a bunch of client functions for each endpoint in our API.
-
 ---
+
+## Let's Make some HTTP Requests
+
+The `client` function creates a bunch of client functions for each endpoint in our API.
 
 ```haskell
 queries :: ClientM (Counter, Counter, Counter)
@@ -344,7 +342,7 @@ main = do
   writePythonForAPI counterApi requests ("examples" </> "api.py")
 ```
 
-
+---
 
 ## Other Interpretations
 
