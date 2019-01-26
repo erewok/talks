@@ -30,8 +30,8 @@ Erik Aker
 
 ## Working with Servant: Core Ideas
 
-1. "Describe" an API as a type, and 
-1. Build (or generate) interpretations of it.
+1. *Describe* an API as a Haskell type, and 
+1. Build (or generate) *interpretations* of it.
 
 ---
 
@@ -63,8 +63,8 @@ newtype Counter = Counter { value :: Int }
   deriving (Generic, Eq, Show, Num)
 
 -- This function works ONLY with type `Counter`, not `Int` or `MyInt`
-someFunc :: Counter -> Bool
-someFunc (Counter n) = n > someInt
+someFunc2 :: Counter -> Bool
+someFunc2 (Counter n) = n > someInt
 
 quicksort :: Ord a => [a] -> [a]
 quicksort [] = []
@@ -94,7 +94,7 @@ newtype Counter = Counter { value :: Int }
 
   --| Example "mult": curl -XPost http://someurl/counter-multiplier/4
 
-type CounterApi = "counter-post" :> Post '[JSON] Counter 
+type CounterApi = "counter-post" :> Get '[JSON] Counter 
     :<|> "counter-multiplier" 
          :> Capture "mult" Int
          :> Post '[JSON] Counter
@@ -105,48 +105,7 @@ type CounterApi = "counter-post" :> Post '[JSON] Counter
 
 ---
 
-## Interpretation I: Serving Servant
-
-```haskell
--- Our Server
-server :: TVar Counter -> Server CounterApi
-server counter = currentValue counter
-  :<|> counterMult counter
-  :<|> counterReset counter
-
--- Here's the *value* representation of our CounterApi type
-counterApi :: Proxy CounterApi
-counterApi = Proxy
-
-main :: IO ()
-main = do
-  cntr <- newTVarIO 0  -- Create counter; start at 0
-  Warp.run 8000 (serve counterApi $ server cntr)
-```
-
----
-
-## Server Handler example: JSON POST
-
-```haskell
-counterReset :: MonadIO m => TVar Counter -> Counter -> m Counter
-counterReset oldCounter newCounter = liftIO . atomically $ do
-  writeTVar oldCounter newCounter
-  pure newCounter
-
-type CounterApi = "counter-reset-post"
-        :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
-    ...
-
--- Our Server
-server :: TVar Counter -> Server SampleApi
-server counter = counterReset counter
-  ...
-```
-
----
-
-## Interpretation II: Generating Client code (Haskell, Javascript, Python...)
+## Interpretation I: Generating Client code
 
 ```haskell
 module Main where
@@ -158,9 +117,9 @@ import Lib
 
 -- Haskell client generation
 postCounter
-  :<|> multiplier
-  :<|> reset
-  :<|> paramCounter = client counterApi
+  :<|> getCount
+  :<|> multiplyCount
+  :<|> resetCount
 ```
 
 ---
@@ -173,13 +132,21 @@ You can't make *incorrectly-typed* requests with these client functions.
 ```haskell
 queries :: ClientM (Counter, Counter, Counter)
 queries = do
-  initial <- reset $ Counter 10
-  multCount <- multiplier 5
-  post <- postCounter
-  reset2 <- reset $ Counter 20
-  multCount2 <- multiplier 5
-  return (initial, multCount, post, reset2, multCount2)
+  initial <- resetCount $ Counter 10
+  multCount <- multiplyCount 5
+  count <- getCount
+  reset2 <- resetCount $ Counter 20
+  multCount2 <- multiplyCount 5
+  return (initial, multCount, count, reset2, multCount2)
+```
 
+(Generating clients in other languages is also possible)
+
+---
+
+## In action...
+
+```haskell
 run :: IO ()
 run = do
   manager <- newManager defaultManagerSettings
@@ -194,11 +161,7 @@ run = do
       print multCount2
 ```
 
----
-
-## In action...
-
-```
+```sh
 ❯ stack exec servant-sample-client
 Counter {value = 10}
 Counter {value = 50}
@@ -209,18 +172,31 @@ Counter {value = 100}
 
 ---
 
-## We can also use servant-foreign to write client generators for any language
+## Interpretation II: Serving Servant
 
 ```haskell
-instance HasForeignType Python B.ByteString Counter where
-  typeFor _ _ _ = "{\"value\": int}"
+counterResetHandler :: MonadIO m => TVar Counter -> Counter -> m Counter
+counterResetHandler oldCounter newCounter = liftIO . atomically $ do
+  writeTVar oldCounter newCounter
+  pure newCounter
 
-main :: IO ()
-main = do
-  -- test out the Haskell clients
-  run
-  -- Write out a Python module with client code
-  writePythonForAPI counterApi requests ("examples" </> "api.py")
+type CounterApi = "counter-reset-post"
+        :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
+    ...
+
+-- Our Server
+server :: TVar Counter -> Server SampleApi
+server counter = counterResetHandler counter
+  ...
+
+  -- Here's the *value* representation of our CounterApi type
+  counterApi :: Proxy CounterApi
+  counterApi = Proxy
+  
+  main :: IO ()
+  main = do
+    cntr <- newTVarIO 0  -- Create counter; start at 0
+    Warp.run 8000 (serve counterApi $ server cntr)
 ```
 
 ---
