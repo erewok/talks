@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Title</title>
+    <title>Servant in 5 Minutes</title>
     <meta charset="utf-8">
     <style>
       @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
@@ -25,6 +25,13 @@
 Erik Aker
 
 [github.com/erewok/talks](https://github.com/erewok/talks)
+
+---
+
+## Working with Servant: Core Ideas
+
+1. "Describe" an API as a type, and 
+1. Build (or generate) interpretations of it.
 
 ---
 
@@ -52,8 +59,12 @@ type MyInt = Int
 someFunc :: Int -> Bool
 someFunc n = n > someInt
 
-fibs :: Integer -> Integer
-fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
+newtype Counter = Counter { value :: Int }
+  deriving (Generic, Eq, Show, Num)
+
+-- This function works ONLY with type `Counter`, not `Int` or `MyInt`
+someFunc :: Counter -> Bool
+someFunc (Counter n) = n > someInt
 
 quicksort :: Ord a => [a] -> [a]
 quicksort [] = []
@@ -62,13 +73,6 @@ quicksort (p:xs) = (quicksort lesser) ++ [p] ++ (quicksort greater)
         lesser = filter (< p) xs
         greater = filter (>= p) xs
 ```
-
----
-
-## Working with Servant: Core Ideas
-
-1. "Describe" an API as a type, and 
-1. Build (or generate) interpretations of it.
 
 ---
 
@@ -86,20 +90,9 @@ instance FromJSON Counter
 
 -- A sample thing to accept and/or return
 newtype Counter = Counter { value :: Int }
-  deriving (Generic, Show, Num)
+  deriving (Generic, Eq, Show, Num)
 
-type CounterHome = "counter-html" :> Get '[JSON, HTML] Counter
-```
-
----
-
-## We can also combine APIs
-
-```haskell
-
-type CounterHome = "counter-html" :> Get '[JSON, HTML] Counter
-
---| Example "mult": curl -XPost http://someurl/counter-multiplier/4
+  --| Example "mult": curl -XPost http://someurl/counter-multiplier/4
 
 type CounterApi = "counter-post" :> Post '[JSON] Counter 
     :<|> "counter-multiplier" 
@@ -108,9 +101,6 @@ type CounterApi = "counter-post" :> Post '[JSON] Counter
     :<|> "counter-reset-post"
          :> ReqBody '[JSON] Counter
          :> Post '[JSON] Counter
-
-type SampleApi = CounterHome :<|> CounterApi
-
 ```
 
 ---
@@ -120,11 +110,9 @@ type SampleApi = CounterHome :<|> CounterApi
 ```haskell
 -- Our Server
 server :: TVar Counter -> Server CounterApi
-server counter = counterHome counter
-  :<|> currentValue counter
+server counter = currentValue counter
   :<|> counterMult counter
   :<|> counterReset counter
-  :<|> counterWithParam counter
 
 -- Here's the *value* representation of our CounterApi type
 counterApi :: Proxy CounterApi
@@ -141,6 +129,11 @@ main = do
 ## Server Handler example: JSON POST
 
 ```haskell
+counterReset :: MonadIO m => TVar Counter -> Counter -> m Counter
+counterReset oldCounter newCounter = liftIO . atomically $ do
+  writeTVar oldCounter newCounter
+  pure newCounter
+
 type CounterApi = "counter-reset-post"
         :> ReqBody '[JSON] Counter :> Post '[JSON] Counter
     ...
@@ -149,11 +142,6 @@ type CounterApi = "counter-reset-post"
 server :: TVar Counter -> Server SampleApi
 server counter = counterReset counter
   ...
-
-counterReset :: MonadIO m => TVar Counter -> Counter -> m Counter
-counterReset oldCounter newCounter = liftIO . atomically $ do
-  writeTVar oldCounter newCounter
-  pure newCounter
 ```
 
 ---
