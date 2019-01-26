@@ -96,7 +96,7 @@ newtype Counter = Counter { value :: Int }
 
 --| Example "mult": curl -XPost http://someurl/counter-multiplier/4
 
-type CounterApi = "counter-post" :> Get '[JSON] Counter 
+type CounterApi = "counter-get" :> Get '[JSON] Counter 
     :<|> "counter-multiplier" 
          :> Capture "mult" Int
          :> Post '[JSON] Counter
@@ -187,7 +187,7 @@ counterResetHandler oldCounter newCounter = liftIO . atomically $ do
 
 -- Our Server
 server :: TVar Counter -> Server SampleApi
-server counter = counterHome :<|> counterMult :<|> counterResetHandler counter
+server counter = counterHome counter :<|> counterMult counter :<|> counterResetHandler counter
 
 
 main :: IO ()
