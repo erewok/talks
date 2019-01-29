@@ -187,13 +187,25 @@ counterResetHandler oldCounter newCounter = liftIO . atomically $ do
 
 -- Our Server
 server :: TVar Counter -> Server SampleApi
-server counter = counterHome counter :<|> counterMult counter :<|> counterResetHandler counter
+server counter = 
+  counterHome counter 
+  :<|> counterMult counter 
+  :<|> counterResetHandler counter
 
 
 main :: IO ()
 main = do
   cntr <- newTVarIO 0  -- Create counter; start at 0
   Warp.run 8000 (serve counterApi $ server cntr)
+
+-- API "description" again:
+type CounterApi = "counter-get" :> Get '[JSON] Counter 
+  :<|> "counter-multiplier" 
+       :> Capture "mult" Int
+       :> Post '[JSON] Counter
+  :<|> "counter-reset-post"
+       :> ReqBody '[JSON] Counter
+       :> Post '[JSON] Counter
 ```
 
 ---
