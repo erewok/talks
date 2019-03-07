@@ -28,21 +28,20 @@ Erik Aker
 
 ---
 
+## Servant: A library (or DSL) for *Describing* APIs
+
+Paper: [Type-level Web APIs with Servant](http://alpmestan.com/servant/servant-wgp.pdf)
+
+Library: [github.com/haskell-servant/servant](https://github.com/haskell-servant/servant)
+
+> "By turning the API into a Haskell type and thereby into a first-class citizen of the language, we gain the ability to perform many operations on the API, while statically checking that all our applications are in fact conforming to the desired API and consistent with each other."
+
+---
+
 ## Working with Servant: Core Ideas
 
 1. *Describe* an API as a Haskell type, and 
 1. Build (or generate) *interpretations* of it.
-
----
-
-## Servant: A library (or DSL) for *Describing* APIs
-
-Library: [github.com/haskell-servant/servant](https://github.com/haskell-servant/servant)
-
-Paper: http://alpmestan.com/servant/servant-wgp.pdf
-
-
-> "By turning the API into a Haskell type and thereby into a first-class citizen of the language, we gain the ability to perform many operations on the API, while statically checking that all our applications are in fact conforming to the desired API and consistent with each other."
 
 ---
 
@@ -79,7 +78,7 @@ quicksort (p:xs) = (quicksort lesser) ++ [p] ++ (quicksort greater)
 ## What does "describing web APIs as a type" look like?
 
 ```haskell
-{-# LANGUAGE DeriveGeneric, StandaloneDeriving, DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric, DataKinds, TypeOperators #-}
 
 module Lib where
 
@@ -110,6 +109,8 @@ type CounterApi = "counter-get" :> Get '[JSON] Counter
 ## Interpretation I: Generating Client code
 
 ```haskell
+{-# LANGUAGE DataKinds, TypeOperators #-}
+
 module Main where
 
 import Network.HTTP.Client (newManager, defaultManagerSettings)
