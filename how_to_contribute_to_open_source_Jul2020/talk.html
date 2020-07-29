@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+        @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+        @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+        @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+        body {
+            font-family: 'Droid Serif';
+        }
+        
+        h1,
+        h2,
+        h3 {
+            font-family: 'Yanone Kaffeesatz';
+            font-weight: normal;
+        }
+        
+        .remark-code,
+        .remark-inline-code {
+            font-family: 'Ubuntu Mono';
+        }
+        
+        img {
+            max-width: 70%;
+        }
+    </style>
+</head>
+
+<body>
+    <textarea id="source">
+
+class: center, middle
+
+# How to Contribute to Open Source: A Primer
+
+---
+
+class: middle
+
+# Index:
+
+1. Open source community and reasons for contributing.
+1. Finding something to work on.
+1. Fork the repo.
+1. Clone your fork. Set Upstream.
+1. Make your change, push it to your repo.
+1. Create a pull request.
+
+---
+
+class: center, middle
+
+## The Weird World of Open Source
+
+![New Projects Meme](./projects_meme.jpg)
+
+---
+class: middle
+
+## Finding something to work on
+
+- By browsing Github: [github.com/explore](https://github.com/explore)
+- To help a library you appreciate (big or small: they all need help!)
+- When people are doing interesting work and you want to help them.
+- If there's a particular problem you are interested in.
+- When you find [a problem](https://github.com/encode/starlette/issues/898) that you [can fix](https://github.com/encode/starlette/pull/900) in a library you are using.
+
+Today's example: [a documentation change](https://github.com/hjacobs/kube-downscaler/issues/122)
+
+---
+class: middle
+
+# Setup Your Workspace
+
+1. Click "Fork repo".
+1. Clone your fork to your local machine `$ git clone https://github.com/YOUR_USERNAME/REPO_NAME`
+1. Set upstream:
+
+```sh
+$ git remote add upstream https://github.com/UPSTREAD_USERNAME/REPO_NAME
+$ git remote -v
+origin	git@github.com:erewok/starlette.git (fetch)
+origin	git@github.com:erewok/starlette.git (push)
+upstream	git@github.com:encode/starlette.git (fetch)
+upstream	git@github.com:encode/starlette.git (push)
+```
+
+---
+class: middle
+
+# What Does Our Fork Mean?
+
+Most of the time we do not have any permissions to contribute _directly_ to a project on Github. That's why we work on a fork.
+
+```
++-- "upstream"
+|   +-- master
+|   +-- branch_one
+|   +-- branch_two
++-- our fork
+|   +-- master (different from upstream!)
+|   +-- branch_one
+|   +-- some_other_branch
+```
+
+Github knows our fork has an "upstream" repo, which means it will target our pull requests there. It won't automatically keep our fork up to date!
+
+**Important Note**: You must manually ensure that your fork's "master" branch matches upstream!
+
+---
+class: middle
+
+# Keeping your fork up to date
+
+Any time upstream's "master" branch has changed, we need to incorporate those changes:
+
+```sh
+$ git checkout master
+$ git pull upstream/master
+$ git push
+```
+
+---
+class: middle
+
+# Time to Hack!
+
+1. Make your changes in a branch.
+1. Figure out how to run the tests
+1. Figure out how to run linting and/or code formatting
+1. Push _your branch_ to _your forked repo_.
+1. Visit in a browser and Github will show you a button to "Create a Pull Request."
+
+---
+class: middle
+
+# Make a Pull Request
+
+Some tips:
+
+- Politeness and great communication helps.
+- Referring to an open issue helps.
+- Anticipating or responding to questions helps.
+
+Now it's time to wait!
+
+---
+class: center, middle
+# Thanks
+
+Find this talk at [github.com/erewok/talks/how_to_contribute_to_open_source_Jul2020](https://github.com/erewok/talks/how_to_contribute_to_open_source_Jul2020)
+
+
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+        var slideshow = remark.create();
+    </script>
+</body>
+
+</html>
