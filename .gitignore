@@ -3,3 +3,6 @@
 build/
 examples/*py
 __pycache__
+/target
+.envrc
+rust_with_haskell_lessons/talk-rs/target/
