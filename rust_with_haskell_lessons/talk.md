@@ -71,7 +71,7 @@ github.com/erewok/talks/tree/master/rust_with_haskell_lessons
 
 ---
 
-## Use the REPL
+## For Haskell Use the REPL
 
 ```sh
 ❯ cabal repl
@@ -112,6 +112,28 @@ fn main() {
 ```
 
 ----
+
+## Haskell Basics
+
+```sh
+❯ mkdir talk-hs
+
+❯ cd talk-hs
+
+❯ cabal init --interactive
+Should I generate a simple project with sensible defaults? [default: y] y
+
+Guessing dependencies...
+...
+
+❯ cabal run
+Resolving dependencies...
+Build profile: -w ghc-8.10.2 -O1
+...
+Hello, Haskell!
+someFunc
+```
+
 
 ## Sum Types, Product Types
 
@@ -165,8 +187,8 @@ some_func val = ...?
 ## What is known about a generic type?
 
 ```haskell
-some_func :: (Show a) => a -> String
-some_func val = show val
+some_string :: (Show a) => a -> String
+some_string val = show val
 ```
 
 ----
@@ -237,16 +259,50 @@ fn calculate_length(s: &String) -> usize {
 }
 ```
 
+---
+
+
+## Why is Haskell interesting?
+
+- Focus on _correctness_.
+- Amazing Concurrency.
+- Moving some business logic into the type system.
+- Thinking of programs as algebraic relationships.
+
+**Downsides**:
+
+- Small community, still niche...
+- For problems you're often on your own.
+- Academic aspects can be offputting to newcomers
+
 ----
+
+## Why is Rust interesting?
+
+- Inspired by langs like Haskell to pursue _correctness_.
+- Insanely fast.
+- Large and friendly community, growing fast.
+- Great story for inter-operating with Python
+
+**Downsides**:
+
+- Borrow-checker takes some learning
+- Still pretty new: things are changing fast
+
+---
 
 ## Some Useful Links
 
 **Haskell**
 
 - Learn You a Haskell for Great Good: http://learnyouahaskell.com/chapters
--
+
+- What I Wish I Knew When Learning Haskell: http://dev.stephendiehl.com/hask/
+
+- A Tour of Go in Haskell: https://a-tour-of-go-in-haskell.syocy.net/en_US/index.html
 
 **Rust**
 
 - Rust Book 2nd Edition: https://doc.rust-lang.org/book/title-page.html
 
+- Rust by Example: https://doc.rust-lang.org/rust-by-example/
