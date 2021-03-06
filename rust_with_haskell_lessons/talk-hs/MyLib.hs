@@ -43,5 +43,16 @@ some_func :: a -> a
 some_func val = undefined
 
 -- What may be known about this `a` generic thing??
-some_string :: a -> String
-some_string val = show val
+-- some_string :: a -> String
+-- some_string val = show val
+
+newtype InterestRate = InterestRate Double deriving (Show)
+newtype LoanAmount = LoanAmount Double deriving (Show)
+newtype Duration = Duration Double deriving (Show)
+newtype InterestCharged = InterestCharged Double deriving (Show)
+
+calculateInterestOnLoan :: InterestRate -> LoanAmount -> Duration -> InterestCharged
+calculateInterestOnLoan (InterestRate rate) (LoanAmount amt) (Duration years) =
+    let
+        fractional_rate = rate / 100
+    in InterestCharged (amt * years * fractional_rate)

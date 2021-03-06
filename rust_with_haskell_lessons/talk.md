@@ -18,7 +18,7 @@ github.com/erewok/talks/tree/master/rust_with_haskell_lessons
 
 - Install Rustup
 - Use VSCode
-- Install VSCode Extension: rust-analyzer (disable deprecated RLS)
+- Install VSCode Extension: `rust-analyzer` (disable deprecated RLS, "Rust")
 - Install VSCode Extension: Crates
 - Install VSCode Extension: CodeLLDB
 
@@ -71,20 +71,19 @@ github.com/erewok/talks/tree/master/rust_with_haskell_lessons
 
 ---
 
-## For Haskell Use the REPL
+## For Haskell Use the REPL (not a debugger)
 
 ```sh
 ❯ cabal repl
-Resolving dependencies...
 Build profile: -w ghc-8.10.2 -O1
 In order, the following will be built (use -v for more details):
- - fake-package-0 (lib) (first run)
-Configuring library for fake-package-0..
-Preprocessing library for fake-package-0..
-Warning: No exposed modules
+ - talk-hs-0.1.0.0 (lib) (file MyLib.hs changed)
+Preprocessing library for talk-hs-0.1.0.0..
 GHCi, version 8.10.2: https://www.haskell.org/ghc/  :? for help
 Loaded GHCi configuration from /Users/eaker/.ghc/ghci.conf
-λ>
+[1 of 1] Compiling MyLib            ( MyLib.hs, interpreted )
+λ>  1 * 2 + 3
+5
 ```
 
 ---
@@ -111,6 +110,8 @@ fn main() {
 }
 ```
 
+Use `cargo run` to run it.
+
 ----
 
 ## Haskell Basics
@@ -134,7 +135,6 @@ Hello, Haskell!
 someFunc
 ```
 
-
 ## Sum Types, Product Types
 
 ```haskell
@@ -143,10 +143,9 @@ data OfferType =
   | Regular
   deriving (Generic, Show, Eq)
 
-offerTypeToLendio :: OfferType -> Value
-offerTypeToLendio Conditional = String "soft"
-offerTypeToLendio Regular     = String "hard"
-
+offerTypeToLendio :: OfferType -> String
+offerTypeToLendio Conditional = "soft"
+offerTypeToLendio Regular     = "hard"
 
 data Vehicle = Vehicle {
   wheelCount :: Int,
@@ -159,7 +158,7 @@ a_vehicle = Vehicle {wheelCount=4, isATruck=True, modelName="tacoma"}
 
 ----
 
-## Extremely Common Types: Option, and Result
+## Very Common Types: Option, and Result
 
 ```haskell
 data Option a =
@@ -261,10 +260,9 @@ fn calculate_length(s: &String) -> usize {
 
 ---
 
-
 ## Why is Haskell interesting?
 
-- Focus on _correctness_.
+- Focus on _correctness_ enforced at compile-time.
 - Amazing Concurrency.
 - Moving some business logic into the type system.
 - Thinking of programs as algebraic relationships.
@@ -279,7 +277,7 @@ fn calculate_length(s: &String) -> usize {
 
 ## Why is Rust interesting?
 
-- Inspired by langs like Haskell to pursue _correctness_.
+- Inspired by langs like Haskell to pursue _correctness_ at compile time.
 - Insanely fast.
 - Large and friendly community, growing fast.
 - Great story for inter-operating with Python
@@ -287,7 +285,19 @@ fn calculate_length(s: &String) -> usize {
 **Downsides**:
 
 - Borrow-checker takes some learning
-- Still pretty new: things are changing fast
+- Still pretty new: things are changing fast.
+
+----
+
+## Correctness at Compile Time
+
+Q: What can go wrong with this function?
+
+```python
+
+def calculate_interest_on_loan(loan_amount, years, interest_rate):
+  return (loan_amount * years * (interest_rate/100))/100
+```
 
 ---
 
