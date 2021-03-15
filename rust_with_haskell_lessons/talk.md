@@ -10,7 +10,7 @@ Erik Aker
 
 All code for this talk available here:
 
-github.com/erewok/talks/tree/master/rust_with_haskell_lessons
+github.com/erewok/talks/tree/main/rust_with_haskell_lessons
 
 ----
 
@@ -71,7 +71,7 @@ github.com/erewok/talks/tree/master/rust_with_haskell_lessons
 
 ---
 
-## For Haskell Use the REPL (not a debugger)
+## For Haskell Use the REPL (no debugger)
 
 ```sh
 ❯ cabal repl
@@ -153,7 +153,10 @@ data Vehicle = Vehicle {
   modelName :: String
   } deriving (Show)
 
-a_vehicle = Vehicle {wheelCount=4, isATruck=True, modelName="tacoma"}
+a_vehicle = Vehicle {
+    wheelCount=4,
+    isATruck=True,
+    modelName="tacoma"}
 ```
 
 ----
@@ -185,10 +188,14 @@ some_func val = ...?
 
 ## What is known about a generic type?
 
+`show` is a function that turns a value into a string.
+
 ```haskell
-some_string :: (Show a) => a -> String
+some_string :: a -> String
 some_string val = show val
 ```
+
+But this doesn't compile!
 
 ----
 
@@ -269,9 +276,9 @@ fn calculate_length(s: &String) -> usize {
 
 **Downsides**:
 
-- Small community, still niche...
+- Remains a small community, pretty niche.
 - For problems you're often on your own.
-- Academic aspects can be offputting to newcomers
+- Academic aspects can be offputting to newcomers.
 
 ----
 
@@ -280,11 +287,11 @@ fn calculate_length(s: &String) -> usize {
 - Inspired by langs like Haskell to pursue _correctness_ at compile time.
 - Insanely fast.
 - Large and friendly community, growing fast.
-- Great story for inter-operating with Python
+- Great story for inter-operating with Python.
 
 **Downsides**:
 
-- Borrow-checker takes some learning
+- Borrow-checker takes some time to learn.
 - Still pretty new: things are changing fast.
 
 ----
@@ -306,6 +313,8 @@ def calculate_interest_on_loan(loan_amount, years, interest_rate):
 **Haskell**
 
 - Learn You a Haskell for Great Good: http://learnyouahaskell.com/chapters
+
+- Learn For Haskell: https://github.com/kowainik/learn4haskell
 
 - What I Wish I Knew When Learning Haskell: http://dev.stephendiehl.com/hask/
 

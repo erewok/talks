@@ -1,4 +1,4 @@
-module MyLib (someFunc) where
+module MyLib where
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
@@ -43,8 +43,8 @@ some_func :: a -> a
 some_func val = undefined
 
 -- What may be known about this `a` generic thing??
--- some_string :: a -> String
--- some_string val = show val
+some_string :: (Show a) => a -> String
+some_string val = show val
 
 newtype InterestRate = InterestRate Double deriving (Show)
 newtype LoanAmount = LoanAmount Double deriving (Show)
