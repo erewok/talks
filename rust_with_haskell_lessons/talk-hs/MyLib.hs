@@ -38,11 +38,19 @@ data Result t e =
   | Err e
   deriving (Show)
 
+-- | pattern-matching makes it so easy t
+showMaybeInt :: Option Int -> String
+showMaybeInt (Some number) = show number
+showMaybeInt None = ""
+
 -- Dealing with generics!
+-- What may be known about this `a` generic thing??
 some_func :: a -> a
 some_func val = undefined
 
--- What may be known about this `a` generic thing??
+-- some_string_bad :: a -> String
+-- some_string_bad val = show val
+
 some_string :: (Show a) => a -> String
 some_string val = show val
 

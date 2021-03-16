@@ -18,9 +18,9 @@ github.com/erewok/talks/tree/main/rust_with_haskell_lessons
 
 - Install Rustup
 - Use VSCode
-- Install VSCode Extension: `rust-analyzer` (disable deprecated RLS, "Rust")
-- Install VSCode Extension: Crates
-- Install VSCode Extension: CodeLLDB
+- Install VSCode Extension: `rust-analyzer` (disable deprecated RLS, `Rust`)
+- Install VSCode Extension: `Crates`
+- Install VSCode Debugger Extension: `CodeLLDB`
 
 ----
 
@@ -59,17 +59,18 @@ github.com/erewok/talks/tree/main/rust_with_haskell_lessons
     ]
 }
 ```
+
 ----
 
 ## Setting Up Our Coding Environment for Haskell
 
-- Install ghcup
-- ghcup install 8.10.2  # install a recent Haskell compiler
+- Install `ghcup`
+- `ghcup install 8.10.2`  # install Haskell compiler
 - Use VSCode
-- Install VSCode Extension: Haskell (Haskell Language Server)
-- Install VSCode Extension: Haskell Syntax Highlighting
+- Install VSCode Extension: `Haskell`
+- Install VSCode Extension: `Haskell Syntax Highlighting`
 
----
+----
 
 ## For Haskell Use the REPL (no debugger)
 
@@ -135,18 +136,11 @@ Hello, Haskell!
 someFunc
 ```
 
-## Sum Types, Product Types
+----
+
+## Product Types ("Records")
 
 ```haskell
-data OfferType =
-  Conditional
-  | Regular
-  deriving (Generic, Show, Eq)
-
-offerTypeToLendio :: OfferType -> String
-offerTypeToLendio Conditional = "soft"
-offerTypeToLendio Regular     = "hard"
-
 data Vehicle = Vehicle {
   wheelCount :: Int,
   isATruck :: Bool,
@@ -158,6 +152,23 @@ a_vehicle = Vehicle {
     isATruck=True,
     modelName="tacoma"}
 ```
+
+----
+
+## Sum Types and Pattern Matching
+
+```haskell
+data OfferType =
+  Conditional
+  | Regular
+  deriving (Generic, Show, Eq)
+
+offerTypeToLendio :: OfferType -> String
+offerTypeToLendio Conditional = "soft"
+offerTypeToLendio Regular     = "hard"
+```
+
+(This is the **best** feature I've ever found in a programming language.)
 
 ----
 
@@ -173,22 +184,27 @@ data Result t e =
   Ok t
   | Err e
   deriving (Show)
+
+showMaybeInt :: Option Int -> String
+showMaybeInt (Some number) = show number
+showMaybeInt None = ""
 ```
 
 ----
 
-## What about generic types?
+## What about functions over generic types?
 
 ```haskell
 some_func :: a -> a
 some_func val = ...?
 ```
 
+Q: What is *known* about a generic type?
+
 ----
 
-## What is known about a generic type?
+## `show` is a function that turns a value into a string
 
-`show` is a function that turns a value into a string.
 
 ```haskell
 some_string :: a -> String
@@ -199,8 +215,18 @@ But this doesn't compile!
 
 ----
 
-## In Rust, These are "Traits"
+## Adding a type Constraint Makes it Compile
 
+```haskell
+some_string :: (Show a) => a -> String
+some_string val = show val
+```
+
+This is called a "typeclass"
+
+----
+
+## In Rust, These are called "Traits"
 
 ```rust
 fn generics<T: std::fmt::Display>(some_generic_type: T) -> String {
@@ -232,9 +258,7 @@ fn generics<T: std::fmt::Display>(some_generic_type: T) -> String {
 
 ----
 
-# Examples of Ownership from Rust Book
-
-https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html#ownership-and-functions
+## Ownership Examples
 
 ```rust
 fn takes_ownership(some_string: String) { // some_string comes into scope
@@ -246,6 +270,9 @@ fn makes_copy(some_integer: i32) { // some_integer comes into scope
     println!("{}", some_integer);
 } // Here, some_integer goes out of scope. Nothing special happens.
 ```
+
+https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html#ownership-and-functions
+
 
 ----
 
@@ -267,12 +294,28 @@ fn calculate_length(s: &String) -> usize {
 
 ---
 
+## Correctness at Compile Time
+
+Q: What can go wrong with this function?
+
+```python
+
+def calculate_interest_on_loan(
+  loan_amount, years, interest_rate
+):
+  init_val = loan_amount * years * (interest_rate / 100)
+  return init_val / 100
+```
+
+---
+
 ## Why is Haskell interesting?
 
 - Focus on _correctness_ enforced at compile-time.
 - Amazing Concurrency.
 - Moving some business logic into the type system.
-- Thinking of programs as algebraic relationships.
+- Thinking of programs and types as algebraic relationships.
+- Immutability. Referential transparency.
 
 **Downsides**:
 
@@ -294,18 +337,6 @@ fn calculate_length(s: &String) -> usize {
 - Borrow-checker takes some time to learn.
 - Still pretty new: things are changing fast.
 
-----
-
-## Correctness at Compile Time
-
-Q: What can go wrong with this function?
-
-```python
-
-def calculate_interest_on_loan(loan_amount, years, interest_rate):
-  return (loan_amount * years * (interest_rate/100))/100
-```
-
 ---
 
 ## Some Useful Links
@@ -319,6 +350,8 @@ def calculate_interest_on_loan(loan_amount, years, interest_rate):
 - What I Wish I Knew When Learning Haskell: http://dev.stephendiehl.com/hask/
 
 - A Tour of Go in Haskell: https://a-tour-of-go-in-haskell.syocy.net/en_US/index.html
+
+----
 
 **Rust**
 
