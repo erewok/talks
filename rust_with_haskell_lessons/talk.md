@@ -140,22 +140,42 @@ someFunc
 
 ## Product Types ("Records")
 
-```haskell
-data Vehicle = Vehicle {
-  wheelCount :: Int,
-  isATruck :: Bool,
-  modelName :: String
-  } deriving (Show)
+```rust
+struct Vehicle {
+  wheel_count: u32,
+  is_a_truck: bool,
+  model_name: String,
+}
 
-a_vehicle = Vehicle {
-    wheelCount=4,
-    isATruck=True,
-    modelName="tacoma"}
+fn make_a_vehicle(wheel_count: u32, is_a_truck, model: String) -> Vehicle {
+    Vehicle {
+        wheel_count, is_a_truck, model_name: model
+    }
+}
 ```
 
 ----
 
+
 ## Sum Types and Pattern Matching
+
+```rust
+pub enum OfferType {
+  Conditional,
+  Regular,
+}
+
+fn offer_type_to_str(otype: OfferType) -> String {
+  match otype {
+    OfferType::Conditional => "soft".to_string(),
+    OfferType::Regular => "hard".to_string()
+  }
+
+```
+
+----
+
+## AKA Algebraic Data Types
 
 ```haskell
 data OfferType =
@@ -188,6 +208,31 @@ data Result t e =
 showMaybeInt :: Option Int -> String
 showMaybeInt (Some number) = show number
 showMaybeInt None = ""
+```
+
+----
+
+## You can pattern match arbitrary or deeply nested things!
+
+```rust
+struct Point {
+    x: i32,
+    y: i32,
+}
+let p = Point { x: 0, y: 7 };
+
+match p {
+    Point { x, y: 0 } => println!("On the x axis at {}", x),
+    Point { x: 0, y } => println!("On the y axis at {}", y),
+    Point { x, y } => println!("On neither axis: ({}, {})", x, y),
+}
+
+// type is Result<Result<u32, error2> Error1>
+match processed_data {
+    Err(err) => "An Error1!",
+    Ok(Err(some_string)) => "An Error2!",
+    Ok(Ok(success)) => format!("{}", success * 4),
+}
 ```
 
 ----
@@ -294,9 +339,7 @@ fn calculate_length(s: &String) -> usize {
 
 ---
 
-## Correctness at Compile Time
-
-Q: What can go wrong with this function?
+## What can go wrong with this function?
 
 ```python
 
@@ -307,30 +350,47 @@ def calculate_interest_on_loan(
   return init_val / 100
 ```
 
+----
+
+## Correctness at Compile Time
+
+```rust
+
+struct Interest(f32);
+struct Years(u8);
+struct LoanAmount(u32);
+
+fn calculate_interest(loan_amt: LoanAmount, years: Years, int: Interest) -> f32 {
+  // function goes here
+}
+
+```
+
 ---
 
 ## Why is Haskell interesting?
 
 - Focus on _correctness_ enforced at compile-time.
-- Amazing Concurrency.
 - Moving some business logic into the type system.
 - Thinking of programs and types as algebraic relationships.
 - Immutability. Referential transparency.
+- Great for Concurrency.
 
 **Downsides**:
 
 - Remains a small community, pretty niche.
-- For problems you're often on your own.
+- With problems you're often on your own.
 - Academic aspects can be offputting to newcomers.
 
 ----
 
 ## Why is Rust interesting?
 
-- Inspired by langs like Haskell to pursue _correctness_ at compile time.
+- Also interested in _correctness_ at compile time.
 - Insanely fast.
 - Large and friendly community, growing fast.
 - Great story for inter-operating with Python.
+- Great tooling.
 
 **Downsides**:
 

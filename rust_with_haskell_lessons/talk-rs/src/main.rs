@@ -1,3 +1,29 @@
+struct Vehicle {
+  wheelCount: u32,
+  isATruck: bool,
+  modelName: String,
+}
+
+fn make_a_vehicle(wheel_count: u32, is_a_truck, model: String) -> Vehicle {
+    Vehicle {
+        wheel_count, is_a_truck, model_name: model
+    }
+}
+
+pub enum OfferType {
+  Conditional,
+  Regular,
+}
+
+fn offer_type_to_str(otype: OfferType) -> String {
+  match otype {
+    OfferType::Conditional => "soft".to_string(),
+    OfferType::Regular => "hard".to_string()
+  }
+
+struct Interest(f32)
+
+
 /// Options
 pub fn some_option1() -> Option<String> {
     Some("Ice Cream!".to_string())
