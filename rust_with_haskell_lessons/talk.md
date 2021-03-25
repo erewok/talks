@@ -269,7 +269,7 @@ match processed_data {
 }
 ```
 
-----
+---
 
 ## What about functions over generic types?
 
