@@ -118,22 +118,25 @@ Use `cargo run` to run it.
 ## Haskell Basics
 
 ```sh
-❯ mkdir talk-hs
-
-❯ cd talk-hs
+❯ mkdir talk-hs && cd talk-hs
 
 ❯ cabal init --interactive
-Should I generate a simple project with sensible defaults? [default: y] y
-
 Guessing dependencies...
-...
 
 ❯ cabal run
-Resolving dependencies...
 Build profile: -w ghc-8.10.2 -O1
-...
-Hello, Haskell!
-someFunc
+	 🚀 Hello, Haskell! 🚀
+```
+
+```haskell
+some_func :: Int -> String
+some_func 0 = ""
+some_func 1 = "Only one"
+some_func a_number = show a_number
+
+main :: IO ()
+main = do
+  putStrLn "\t 🚀 Hello, Haskell! 🚀 "
 ```
 
 ---

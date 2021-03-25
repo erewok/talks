@@ -1,5 +1,10 @@
 module MyLib where
 
+some_func :: Int -> String
+some_func 0 = ""
+some_func 1 = "Only one"
+some_func a_number = show a_number
+
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
 
@@ -45,8 +50,8 @@ showMaybeInt None = ""
 
 -- Dealing with generics!
 -- What may be known about this `a` generic thing??
-some_func :: a -> a
-some_func val = undefined
+some_generic_func :: a -> a
+some_generic_func val = undefined
 
 -- some_string_bad :: a -> String
 -- some_string_bad val = show val
