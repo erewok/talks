@@ -402,8 +402,8 @@ fn calculate_interest(loan_amt: LoanAmount, years: Years, int: Interest) -> f32 
 ## Why is Haskell interesting?
 
 - Focus on _correctness_ enforced at compile-time.
-- Moving some business logic into the type system.
-- Thinking of programs and types as algebraic relationships.
+- Move some business logic into the type system.
+- Think of programs and types as algebraic relationships.
 - Immutability. Referential transparency.
 - Great for Concurrency.
 
@@ -417,7 +417,7 @@ fn calculate_interest(loan_amt: LoanAmount, years: Years, int: Interest) -> f32 
 
 ## Why is Rust interesting?
 
-- Also interested in _correctness_ at compile time.
+- Also focus on _correctness_ at compile time.
 - Insanely fast.
 - Large and friendly community, growing fast.
 - Great story for inter-operating with Python.
