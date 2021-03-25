@@ -1,15 +1,3 @@
-struct Vehicle {
-  wheelCount: u32,
-  isATruck: bool,
-  modelName: String,
-}
-
-fn make_a_vehicle(wheel_count: u32, is_a_truck, model: String) -> Vehicle {
-    Vehicle {
-        wheel_count, is_a_truck, model_name: model
-    }
-}
-
 pub enum OfferType {
   Conditional,
   Regular,
@@ -20,8 +8,35 @@ fn offer_type_to_str(otype: OfferType) -> String {
     OfferType::Conditional => "soft".to_string(),
     OfferType::Regular => "hard".to_string()
   }
+}
 
-struct Interest(f32)
+pub enum BodyDamage {
+  DeepDent,
+  LightScratches,
+  CrumpledZone,
+  MissingBumper,
+}
+
+struct SalvageVehicle {
+  damage: BodyDamage,
+  is_running: bool,
+}
+
+fn make_a_vehicle(damage: BodyDamage, is_running: bool) -> Vehicle {
+    Vehicle {
+        damage, is_running: is_running
+    }
+}
+
+struct Interest(f32);
+struct Years(u8);
+struct LoanAmount(u32);
+
+fn calculate_interest(loan_amt: LoanAmount, years: Years, int: Interest) -> f32 {
+  // function goes here
+  1.0
+}
+
 
 
 /// Options

@@ -136,26 +136,15 @@ Hello, Haskell!
 someFunc
 ```
 
-----
+---
 
-## Product Types ("Records")
+## Types, Values, and Cardinality
 
-```rust
-struct Vehicle {
-  wheel_count: u32,
-  is_a_truck: bool,
-  model_name: String,
-}
-
-fn make_a_vehicle(wheel_count: u32, is_a_truck, model: String) -> Vehicle {
-    Vehicle {
-        wheel_count, is_a_truck, model_name: model
-    }
-}
-```
+- Type: abstract set of things.
+- Value: an example within a set of types.
+- Cardinality: how many possible instances inahbit a type?
 
 ----
-
 
 ## Sum Types and Pattern Matching
 
@@ -170,6 +159,7 @@ fn offer_type_to_str(otype: OfferType) -> String {
     OfferType::Conditional => "soft".to_string(),
     OfferType::Regular => "hard".to_string()
   }
+}
 
 ```
 
@@ -181,7 +171,6 @@ fn offer_type_to_str(otype: OfferType) -> String {
 data OfferType =
   Conditional
   | Regular
-  deriving (Generic, Show, Eq)
 
 offerTypeToLendio :: OfferType -> String
 offerTypeToLendio Conditional = "soft"
@@ -189,6 +178,48 @@ offerTypeToLendio Regular     = "hard"
 ```
 
 (This is the **best** feature I've ever found in a programming language.)
+
+----
+
+## How To Represent JSON?
+
+```rust
+
+// fn parse_json(some_str: String) -> ? {
+//   // parse some_str into different things...??
+// }
+
+enum Value {
+    Null,
+    Bool(bool),
+    Number(Number),
+    String(String),
+    Array(Vec<Value>),
+    Object(Map<String, Value>),
+}
+```
+
+---
+
+## Product Types ("Records")
+
+```rust
+pub enum BodyDamage {
+  DeepDent,
+  LightScratches,
+  CrumpledZone,
+  MissingBumper,
+}
+struct SalvageVehicle {
+  damage: BodyDamage,
+  is_running: bool,
+}
+fn make_a_vehicle(damage: BodyDamage, is_running: bool) -> Vehicle {
+    Vehicle {
+        damage, is_running: is_running
+    }
+}
+```
 
 ----
 
