@@ -22,8 +22,8 @@ struct SalvageVehicle {
   is_running: bool,
 }
 
-fn make_a_vehicle(damage: BodyDamage, is_running: bool) -> Vehicle {
-    Vehicle {
+fn make_a_vehicle(damage: BodyDamage, is_running: bool) -> SalvageVehicle {
+    SalvageVehicle {
         damage, is_running: is_running
     }
 }
